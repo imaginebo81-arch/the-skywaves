@@ -10,7 +10,7 @@ export default function Hero() {
 
   return (
     <section
-      className="glass-hero w-full h-[600px] flex items-end p-8 md:p-16 text-on-surface"
+      className="glass-hero w-full min-h-[500px] md:h-[600px] flex items-end p-6 md:p-16 text-on-surface"
       style={{
         backgroundImage:
           "url('https://res.cloudinary.com/dm3scoj2q/image/upload/v1781176425/ChatGPT_Image_Jun_11_2026_04_43_22_PM_nxj88b.webp')",
@@ -23,12 +23,12 @@ export default function Hero() {
         <p className="font-body-lg text-body-lg text-surface-container-highest max-w-2xl">
           Gain industry-relevant skills through expert-led training in Computer Education, English Communication, Fashion Design, and Clinical Hypnotherapy. Learn practically, earn recognized certifications, and build the confidence to achieve your career goals.
         </p>
-        <div className="flex flex-wrap gap-4 mt-4">
-          <button className="btn-primary px-8 py-4 font-title-md text-title-md flex items-center gap-2 cursor-pointer">
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
+          <button className="btn-primary w-full sm:w-auto px-8 py-4 font-title-md text-title-md flex justify-center items-center gap-2 cursor-pointer">
             Explore Courses
             <ArrowRight size={24} />
           </button>
-          <button className="bg-surface/10 backdrop-blur-md text-on-secondary border-2 border-surface/30 rounded-[10px] px-8 py-4 font-title-md text-title-md hover:bg-surface/20 transition-all cursor-pointer">
+          <button className="bg-surface/10 backdrop-blur-md text-on-secondary border-2 border-surface/30 rounded-[10px] w-full sm:w-auto px-8 py-4 font-title-md text-title-md hover:bg-surface/20 transition-all cursor-pointer">
             View Curriculum
           </button>
         </div>

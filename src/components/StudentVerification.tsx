@@ -11,7 +11,7 @@ export default function StudentVerification() {
 
   if (submitted) {
     return (
-      <section className="bento-card p-8 md:p-16 bg-surface-container-lowest max-w-3xl mx-auto w-full text-center flex flex-col items-center gap-6">
+      <section className="bento-card p-6 md:p-16 bg-surface-container-lowest max-w-3xl mx-auto w-full text-center flex flex-col items-center gap-6">
         <div className="w-20 h-20 bg-primary-container text-primary rounded-full flex items-center justify-center">
           <CheckCircle size={40} />
         </div>
@@ -29,7 +29,7 @@ export default function StudentVerification() {
   }
 
   return (
-    <section className="bento-card p-8 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full">
+    <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full">
       <div className="mb-8 border-b border-outline-variant pb-6">
         <h2 className="font-headline-lg text-headline-lg text-on-background mb-2">
           Student Verification

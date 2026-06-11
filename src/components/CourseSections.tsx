@@ -143,7 +143,7 @@ export function LanguageMastery() {
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJqwE0KJ1jVMYseww8vkqA7kNi4qrmPRYUco8319CaeOlHDY6EgUBSaemOdi8hszOZxr1L1JxdcgZvNfV8-XLv31Tmfe905UmVv3lr04bYIor2IBwDlFZ9iLGhdu0Q3tngXCLzOetJEfS67dEYPCtbx6DohgmBNX0T4BmQLj0JhShr0f1wjTh0VJnz2jysKriooCS50FZlVKw_xrSVThTnT7Rit-nm6jblhhgB_0EAOMSyyAou2A7pvipLOjynwFGABP6DVKAJJBM"
             />
           </div>
-          <div className="w-full md:w-3/5 p-8 flex flex-col gap-4 justify-center">
+          <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col gap-4 justify-center">
             <div className="flex gap-2">
               <span className="chip font-label-sm text-label-sm">LNG301</span>
               <span className="chip font-label-sm text-label-sm bg-secondary-container/30 text-secondary">
@@ -238,7 +238,7 @@ export function CreativeWellness() {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-bento-gap">
       {/* Fashion Design */}
-      <div className="bento-card p-8 bg-gradient-to-br from-tertiary-fixed to-surface-container-lowest border-none relative overflow-hidden flex flex-col justify-between min-h-[400px]">
+      <div className="bento-card p-6 md:p-8 bg-gradient-to-br from-tertiary-fixed to-surface-container-lowest border-none relative overflow-hidden flex flex-col justify-between min-h-[400px]">
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-tertiary-container rounded-full blur-3xl opacity-50 pointer-events-none"></div>
         <div className="relative z-10">
           <div className="w-14 h-14 rounded-2xl bg-tertiary text-on-tertiary flex items-center justify-center mb-6 shadow-lg shadow-tertiary/30">
@@ -291,7 +291,7 @@ export function CreativeWellness() {
       </div>
 
       {/* Hypnotherapy */}
-      <div className="bento-card p-8 bg-gradient-to-bl from-primary-fixed to-surface-container-lowest border-none relative overflow-hidden flex flex-col justify-between min-h-[400px]">
+      <div className="bento-card p-6 md:p-8 bg-gradient-to-bl from-primary-fixed to-surface-container-lowest border-none relative overflow-hidden flex flex-col justify-between min-h-[400px]">
         <div className="absolute -left-10 -bottom-10 w-64 h-64 bg-primary-container rounded-full blur-3xl opacity-30 pointer-events-none"></div>
         <div className="relative z-10">
           <div className="w-14 h-14 rounded-2xl bg-primary text-on-primary flex items-center justify-center mb-6 shadow-lg shadow-primary/30">

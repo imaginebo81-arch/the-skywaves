@@ -5,7 +5,7 @@ export default function ContactUs() {
     <div className="flex flex-col gap-section-margin">
       {/* Header section */}
       <section 
-        className="rounded-[24px] p-8 md:p-16 text-center shadow-sm overflow-hidden relative flex flex-col justify-center min-h-[300px]"
+        className="rounded-[24px] p-6 md:p-16 text-center shadow-sm overflow-hidden relative flex flex-col justify-center min-h-[250px] md:min-h-[300px]"
       >
         <div 
           className="absolute inset-0 bg-cover bg-center z-0"
@@ -26,7 +26,7 @@ export default function ContactUs() {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Contact Information & Form */}
-        <section className="bento-card p-8 md:p-12 bg-surface-container-lowest flex flex-col justify-between h-full">
+        <section className="bento-card p-6 md:p-12 bg-surface-container-lowest flex flex-col justify-between h-full">
           <div>
             <h2 className="font-headline-lg text-headline-lg text-on-background mb-6">
               Get in Touch
@@ -107,7 +107,7 @@ export default function ContactUs() {
         </section>
 
         {/* Map Section */}
-        <section className="bento-card overflow-hidden h-[500px] lg:h-full min-h-[500px]">
+        <section className="bento-card overflow-hidden h-[300px] md:min-h-[400px] lg:h-full lg:min-h-[500px]">
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d112000!2d77.1!3d28.6!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd5b347eb62d%3A0x37205b715389640!2sNew%20Delhi%2C%20Delhi!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
             width="100%"
