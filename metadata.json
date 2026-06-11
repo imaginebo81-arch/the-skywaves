@@ -1,0 +1,6 @@
+{
+  "name": "The Skywaves Educare",
+  "description": "Premium landing page for The Skywaves Educare institution.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
