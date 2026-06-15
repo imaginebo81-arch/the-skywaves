@@ -1,56 +1,57 @@
+import { Facebook, Twitter, Linkedin, Instagram, Youtube } from "lucide-react";
+import { Link } from "react-router-dom";
+
 export default function Footer() {
   return (
-    <footer className="bg-inverse-surface text-inverse-on-surface font-body-md text-body-md w-full px-4 md:px-[80px] py-section-margin flex flex-col gap-12 mt-section-margin border-t border-outline/30">
-      <div className="flex flex-col md:flex-row justify-between items-start gap-bento-gap">
-        <div className="flex flex-col gap-4 items-center md:items-start max-w-sm">
-          <img
-            alt="The Skywaves Educare Logo"
-            className="h-[62px] object-contain"
-            src="https://res.cloudinary.com/dm3scoj2q/image/upload/v1781174348/Landscape_G_Logo_lhy1lo.png"
-          />
-          <p className="text-inverse-on-surface/80 font-body-md text-body-md text-sm text-center md:text-left">
-            Elevating knowledge, inspiring minds. Join our community of learners to create a better future.
-          </p>
-        </div>
-        
-        <div className="w-full md:w-1/3 h-48 rounded-[12px] overflow-hidden border border-outline/30 bg-surface-container-high">
-          <iframe 
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d113941.74201389088!2d-122.42067980312645!3d37.77492951755106!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80859a6d00690021%3A0x4a501367f076adff!2sSan%20Francisco%2C%20CA!5e0!3m2!1sen!2sus!4v1709664531853!5m2!1sen!2sus" 
-            width="100%" 
-            height="100%" 
-            style={{ border: 0 }} 
-            allowFullScreen={false} 
-            loading="lazy" 
-            referrerPolicy="no-referrer-when-downgrade"
-          ></iframe>
+    <footer className="bg-dark text-white w-full border-t border-white/10">
+      <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 py-16 flex flex-col gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 items-start">
+          <div className="flex flex-col gap-6 md:col-span-2 max-w-sm">
+            <img
+              alt="The Skywaves Educare Logo"
+              className="h-[49px] object-contain object-left"
+              src="https://res.cloudinary.com/dm3scoj2q/image/upload/v1781508181/Landscape_G_Logo_lhy1lo.png"
+            />
+            <p className="text-gray-300 text-sm leading-relaxed">
+              Elevating knowledge, inspiring minds.<br/>Join our community of learners to<br/>create a better future.
+            </p>
+            <div className="flex gap-4">
+              <a href="#" className="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center hover:bg-[#eaa320] hover:text-black hover:border-[#eaa320] transition-colors"><Facebook size={16} /></a>
+              <a href="#" className="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center hover:bg-[#eaa320] hover:text-black hover:border-[#eaa320] transition-colors"><Twitter size={16} /></a>
+              <a href="#" className="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center hover:bg-[#eaa320] hover:text-black hover:border-[#eaa320] transition-colors"><Linkedin size={16} /></a>
+              <a href="#" className="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center hover:bg-[#eaa320] hover:text-black hover:border-[#eaa320] transition-colors"><Instagram size={16} /></a>
+              <a href="#" className="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center hover:bg-[#eaa320] hover:text-black hover:border-[#eaa320] transition-colors"><Youtube size={16} /></a>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-4">
+            <h3 className="font-semibold text-white mb-2 text-lg">Quick Links</h3>
+            <Link to="/" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Home</Link>
+            <Link to="/about" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">About Us</Link>
+            <Link to="/contact" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Contact Us</Link>
+            <Link to="/verification" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Student Verification</Link>
+            <Link to="/employment-verification" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Employment Verification</Link>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <h3 className="font-semibold text-white mb-2 text-lg">Courses</h3>
+            <Link to="/courses?category=Computer" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Computer Courses</Link>
+            <Link to="/courses?category=English" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">English Courses</Link>
+            <Link to="/courses?category=Fashion" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Fashion Designing</Link>
+            <Link to="/courses?category=Boutique" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Boutique Courses</Link>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-6 border-t border-outline/30">
-        <p className="text-inverse-on-surface/80 font-body-md text-body-md text-sm">
+      <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 py-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p className="text-gray-400 text-sm">
           © 2024 The Skywaves Educare. Elevating Knowledge.
         </p>
         <nav className="flex flex-wrap justify-center gap-6">
-          <a
-            className="text-inverse-on-surface/80 hover:text-primary-fixed hover:-translate-y-1 transition-transform transition-all duration-300 text-sm cursor-pointer"
-          >
-            Privacy Policy
-          </a>
-          <a
-            className="text-inverse-on-surface/80 hover:text-primary-fixed hover:-translate-y-1 transition-transform transition-all duration-300 text-sm cursor-pointer"
-          >
-            Terms of Service
-          </a>
-          <a
-            className="text-inverse-on-surface/80 hover:text-primary-fixed hover:-translate-y-1 transition-transform transition-all duration-300 text-sm cursor-pointer"
-          >
-            Contact Us
-          </a>
-          <a
-            className="text-inverse-on-surface/80 hover:text-primary-fixed hover:-translate-y-1 transition-transform transition-all duration-300 text-sm cursor-pointer"
-          >
-            Careers
-          </a>
+          <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Privacy Policy</a>
+          <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Terms of Service</a>
+          <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Contact Us</a>
+          <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Admin</a>
         </nav>
       </div>
     </footer>

@@ -1,5 +1,5 @@
 import { UploadCloud, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 
 export default function StudentVerification() {
   const [submitted, setSubmitted] = useState(false);

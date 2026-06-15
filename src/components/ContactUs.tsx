@@ -5,14 +5,8 @@ export default function ContactUs() {
     <div className="flex flex-col gap-section-margin">
       {/* Header section */}
       <section 
-        className="rounded-[24px] p-6 md:p-16 text-center shadow-sm overflow-hidden relative flex flex-col justify-center min-h-[250px] md:min-h-[300px]"
+        className="rounded-[24px] p-6 md:p-16 text-center shadow-sm overflow-hidden relative flex flex-col justify-center min-h-[250px] md:min-h-[300px] bg-dark"
       >
-        <div 
-          className="absolute inset-0 bg-cover bg-center z-0"
-          style={{ backgroundImage: "url('https://res.cloudinary.com/dm3scoj2q/image/upload/v1781176425/ChatGPT_Image_Jun_11_2026_04_43_22_PM_nxj88b.webp')" }}
-        />
-        <div className="absolute inset-0 bg-black/60 z-10" />
-
         <div className="relative z-20">
           <h1 className="font-display-md text-display-md text-white mb-4">
             Contact Us

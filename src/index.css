@@ -1,159 +1,96 @@
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-    --color-tertiary-container: #ff90be;
-    --color-outline-variant: #d0c5af;
-    --color-on-surface: #191c1e;
-    --color-inverse-on-surface: #eff1f3;
-    --color-on-primary-fixed: #241a00;
-    --color-error-container: #ffdad6;
-    --color-surface-container: #eceef0;
-    --color-outline: #7f7663;
-    --color-on-secondary-fixed: #07006c;
-    --color-surface-container-highest: #e0e3e5;
-    --color-on-background: #191c1e;
-    --color-on-tertiary-container: #890051;
-    --color-on-tertiary-fixed: #3e0022;
-    --color-surface-container-low: #f2f4f6;
-    --color-on-tertiary: #ffffff;
-    --color-surface-dim: #d8dadc;
-    --color-on-secondary: #ffffff;
-    --color-on-secondary-fixed-variant: #2f2ebe;
-    --color-secondary-fixed: #e1e0ff;
-    --color-surface-container-high: #e6e8ea;
-    --color-surface-bright: #f7f9fb;
-    --color-primary-container: #d4af37;
-    --color-tertiary-fixed: #ffd9e4;
-    --color-surface: #f7f9fb;
-    --color-inverse-surface: #2d3133;
-    --color-tertiary: #b4136d;
-    --color-surface-tint: #735c00;
-    --color-surface-variant: #e0e3e5;
-    --color-on-primary-container: #554300;
-    --color-primary: #735c00;
-    --color-primary-fixed: #ffe088;
-    --color-on-secondary-container: #fffbff;
-    --color-secondary-container: #6063ee;
-    --color-on-surface-variant: #4d4635;
-    --color-inverse-primary: #e9c349;
-    --color-error: #ba1a1a;
-    --color-primary-fixed-dim: #e9c349;
-    --color-on-primary: #ffffff;
-    --color-on-error: #ffffff;
-    --color-on-primary-fixed-variant: #574500;
-    --color-tertiary-fixed-dim: #ffb0cd;
-    --color-secondary: #4648d4;
+    --color-primary: #eaa320;
+    --color-on-primary: #000000;
+    --color-background: #ffffff;
+    --color-on-background: #202428;
+    --color-surface: #ffffff;
+    --color-on-surface: #202428;
+    --color-dark-bg: #151b23;
+    --color-on-dark-bg: #ffffff;
     --color-surface-container-lowest: #ffffff;
-    --color-on-tertiary-fixed-variant: #8c0053;
-    --color-secondary-fixed-dim: #c0c1ff;
-    --color-on-error-container: #93000a;
-    --color-background: #f7f9fb;
+    --color-surface-variant: #e5e7eb;
 
     --radius-DEFAULT: 8px;
     --radius-sm: 4px;
     --radius-md: 8px;
-    --radius-lg: 10px;
-    --radius-xl: 15px;
-    --radius-2xl: 15px;
-    --radius-3xl: 15px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 24px;
+    --radius-3xl: 32px;
 
     --spacing-section-margin: 64px;
-    --spacing-container-padding-desktop: 40px;
-    --spacing-base: 8px;
-    --spacing-bento-gap: 24px;
-    --spacing-container-padding-mobile: 20px;
+    --spacing-container-padding-desktop: 80px;
 
-    --font-body-md: "Hanken Grotesk", sans-serif;
-    --font-headline-lg: "Hanken Grotesk", sans-serif;
-    --font-title-md: "Hanken Grotesk", sans-serif;
-    --font-label-sm: "JetBrains Mono", monospace;
-    --font-display-lg: "Hanken Grotesk", sans-serif;
-    --font-headline-lg-mobile: "Hanken Grotesk", sans-serif;
-    --font-body-lg: "Hanken Grotesk", sans-serif;
+    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer utilities {
-    .text-body-md { font-size: 16px; line-height: 24px; font-weight: 400; }
-    .text-headline-lg { font-size: 32px; line-height: 40px; letter-spacing: -0.01em; font-weight: 700; }
-    .text-title-md { font-size: 20px; line-height: 28px; font-weight: 600; }
-    .text-label-sm { font-size: 12px; line-height: 16px; letter-spacing: 0.05em; font-weight: 500; }
-    .text-display-lg { font-size: 48px; line-height: 56px; letter-spacing: -0.02em; font-weight: 800; }
-    .text-headline-lg-mobile { font-size: 28px; line-height: 36px; font-weight: 700; }
-    .text-body-lg { font-size: 18px; line-height: 28px; font-weight: 400; }
+    .text-body-md { font-size: 16px; line-height: 24px; font-weight: 400; font-family: var(--font-sans); }
+    .text-headline-lg { font-size: 32px; line-height: 40px; letter-spacing: -0.01em; font-weight: 700; font-family: var(--font-sans); }
+    .text-title-md { font-size: 18px; line-height: 28px; font-weight: 600; font-family: var(--font-sans); }
+    .text-label-sm { font-size: 14px; line-height: 20px; font-weight: 500; font-family: var(--font-sans); }
+    .text-display-lg { font-size: 56px; line-height: 64px; letter-spacing: -0.02em; font-weight: 800; font-family: var(--font-sans); }
+    .text-headline-lg-mobile { font-size: 40px; line-height: 48px; font-weight: 700; font-family: var(--font-sans); }
+    .text-body-lg { font-size: 18px; line-height: 28px; font-weight: 400; font-family: var(--font-sans); }
 }
 
 body {
     background-color: var(--color-background);
-    background-image: radial-gradient(circle at 50% 0%, var(--color-surface-bright) 0%, var(--color-background) 100%);
-    background-attachment: fixed;
     color: var(--color-on-background);
+    font-family: var(--font-sans);
 }
 
 .bento-card {
     background-color: var(--color-surface-container-lowest);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--color-surface-variant);
-    box-shadow: 0 10px 30px -10px rgba(70, 72, 212, 0.05), 0 4px 6px -4px rgba(70, 72, 212, 0.05);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.bento-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -10px rgba(70, 72, 212, 0.15), 0 8px 12px -6px rgba(70, 72, 212, 0.1);
-    border-color: var(--color-outline-variant);
+    border-radius: var(--radius-2xl);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
 }
 
-.glass-hero {
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    position: relative;
-    background-size: cover;
-    background-position: center;
-}
-.glass-hero::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(25, 28, 30, 0.9) 0%, rgba(25, 28, 30, 0.2) 100%);
-    z-index: 10;
-}
-.hero-content {
-    z-index: 20;
+.bg-dark {
+    background-color: var(--color-dark-bg);
+    color: var(--color-on-dark-bg);
 }
 
 .btn-primary {
-    background-color: var(--color-secondary);
-    color: var(--color-on-secondary);
-    border-radius: 10px;
-    box-shadow: inset 0 2px 4px rgba(255,255,255,0.2);
+    background-color: #eaa320;
+    color: #1a1a1a;
+    border-radius: 8px;
+    font-weight: 600;
     transition: all 0.2s ease;
 }
 .btn-primary:hover {
-    background-color: var(--color-secondary-container);
-    color: var(--color-on-secondary-container);
-    transform: scale(1.02);
-    box-shadow: 0 8px 16px -4px rgba(70, 72, 212, 0.3), inset 0 2px 4px rgba(255,255,255,0.2);
+    background-color: #de9b1f;
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
     background-color: transparent;
-    color: var(--color-inverse-on-surface);
-    border: 2px solid var(--color-secondary-fixed-dim);
-    border-radius: 10px;
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    font-weight: 600;
     transition: all 0.2s ease;
 }
 .btn-secondary:hover {
-    background-color: var(--color-secondary);
-    color: var(--color-on-secondary);
-    border-color: var(--color-secondary);
-    transform: scale(1.02);
+    background-color: rgba(255,255,255,0.05);
 }
 
 .chip {
-    background-color: var(--color-surface-container-high);
-    color: var(--color-on-surface-variant);
-    border-radius: 8px;
-    padding: 4px 12px;
+    background-color: #f3f4f6;
+    color: #374151;
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.animate-marquee {
+    animation: marquee 25s linear infinite;
 }
 
 @keyframes marquee {
@@ -161,11 +98,17 @@ body {
     100% { transform: translateX(-50%); }
 }
 
-.animate-marquee {
-    animation: marquee 25s linear infinite;
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
+.animate-float {
+    animation: float 4s ease-in-out infinite;
 }
 
 .mask-edges {
-    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
     mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
