@@ -20,6 +20,8 @@ import EmploymentVerification from "./components/EmploymentVerification";
 import ContactUs from "./components/ContactUs";
 import CoursesPage from "./pages/CoursesPage";
 import AboutUs from "./components/AboutUs";
+import NotFound from "./components/NotFound";
+import ScrollToTop from "./components/ScrollToTop";
 
 function HomePage() {
   return (
@@ -50,16 +52,18 @@ function HomePage() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <div className="antialiased min-h-screen flex flex-col font-sans">
         <Header />
         <main className="flex-grow w-full">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/courses" element={<CoursesPage />} />
-            <Route path="/about" element={<div className="py-20 px-4 md:px-12"><AboutUs /></div>} />
+            <Route path="/about-us" element={<div className="py-20 px-4 md:px-12"><AboutUs /></div>} />
             <Route path="/verification" element={<div className="py-20 px-4 md:px-12"><StudentVerification /></div>} />
             <Route path="/employment-verification" element={<div className="py-20 px-4 md:px-12"><EmploymentVerification /></div>} />
             <Route path="/contact" element={<div className="py-20 px-4 md:px-12"><ContactUs /></div>} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />

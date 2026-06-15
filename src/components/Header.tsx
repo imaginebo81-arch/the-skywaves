@@ -84,7 +84,7 @@ export default function Header() {
             </div>
           )}
         </div>
-        <Link to="/about" className="hover:text-primary transition-all duration-200">
+        <Link to="/about-us" className="hover:text-primary transition-all duration-200">
           About Us
         </Link>
         <Link to="/contact" className="hover:text-primary transition-all duration-200">
@@ -180,7 +180,7 @@ export default function Header() {
               </div>
             )}
           </div>
-          <Link onClick={() => setIsMobileMenuOpen(false)} to="/about" className="hover:text-primary text-lg transition-colors">
+          <Link onClick={() => setIsMobileMenuOpen(false)} to="/about-us" className="hover:text-primary text-lg transition-colors">
             About Us
           </Link>
           <Link onClick={() => setIsMobileMenuOpen(false)} to="/contact" className="hover:text-primary text-lg transition-colors">

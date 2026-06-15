@@ -27,7 +27,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h3 className="font-semibold text-white mb-2 text-lg">Quick Links</h3>
             <Link to="/" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Home</Link>
-            <Link to="/about" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">About Us</Link>
+            <Link to="/about-us" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">About Us</Link>
             <Link to="/contact" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Contact Us</Link>
             <Link to="/verification" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Student Verification</Link>
             <Link to="/employment-verification" className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">Employment Verification</Link>
