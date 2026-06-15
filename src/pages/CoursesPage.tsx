@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { coursesData, courseCategories, courseGradients } from "../data/courses";
 
 export default function CoursesPage() {
@@ -30,6 +31,10 @@ export default function CoursesPage() {
 
   return (
     <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 py-12 flex flex-col gap-8">
+      <Helmet>
+        <title>Courses - Skywaves Educare</title>
+        <meta name="description" content="Explore our wide range of premium courses including Computer Science, Fashion Design, English, and Boutique Studies at Skywaves Educare." />
+      </Helmet>
       <div className="text-center max-w-2xl mx-auto mb-8">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Our Courses</h1>
         <p className="text-gray-600 text-lg">

@@ -1,5 +1,6 @@
 import { CheckCircle, BriefcaseBusiness } from "lucide-react";
 import React, { useState } from "react";
+import { Helmet } from "react-helmet-async";
 
 export default function EmploymentVerification() {
   const [verified, setVerified] = useState(false);
@@ -12,6 +13,9 @@ export default function EmploymentVerification() {
   if (verified) {
     return (
       <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full text-center flex flex-col items-center gap-8">
+        <Helmet>
+          <title>Employment Verified - Skywaves Educare</title>
+        </Helmet>
         <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
           <CheckCircle size={40} />
         </div>
@@ -74,6 +78,10 @@ export default function EmploymentVerification() {
 
   return (
     <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-3xl mx-auto w-full">
+      <Helmet>
+        <title>Employment Verification - Skywaves Educare</title>
+        <meta name="description" content="Verify the employment records of Skywaves Educare faculty and staff efficiently." />
+      </Helmet>
       <div className="mb-8 border-b border-outline-variant pb-6 text-center md:text-left">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">
           Employment Verification

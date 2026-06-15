@@ -4,6 +4,7 @@
  */
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import TrustIndicators from "./components/TrustIndicators";
@@ -23,6 +24,10 @@ import AboutUs from "./components/AboutUs";
 function HomePage() {
   return (
     <>
+      <Helmet>
+        <title>Skywaves Educare - Empowering Your Future</title>
+        <meta name="description" content="Join Skywaves Educare for premium courses in Computer Science, English, Fashion Design, and Boutique Studies. Start your journey today!" />
+      </Helmet>
       <Hero />
       <TrustIndicators />
       <FeaturedCourses />

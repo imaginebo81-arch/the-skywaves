@@ -1,8 +1,13 @@
 import { BookOpen, Target, Users, Award } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function AboutUs() {
   return (
     <div className="flex flex-col gap-16">
+      <Helmet>
+        <title>About Us - Skywaves Educare</title>
+        <meta name="description" content="Learn about Skywaves Educare's mission, story, and core values in providing top-tier, industry-aligned education to our vibrant student community." />
+      </Helmet>
       {/* Hero Section */}
       <section className="relative rounded-[32px] overflow-hidden min-h-[400px] flex items-center justify-center p-8 md:p-16">
         <div className="absolute inset-0 z-0">

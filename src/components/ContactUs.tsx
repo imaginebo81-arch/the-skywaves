@@ -1,8 +1,13 @@
 import { Mail, Phone, MapPin } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function ContactUs() {
   return (
     <div className="flex flex-col gap-section-margin">
+      <Helmet>
+        <title>Contact Us - Skywaves Educare</title>
+        <meta name="description" content="Get in touch with Skywaves Educare for admissions, inquiries, or any educational guidance. We're here to help." />
+      </Helmet>
       {/* Header section */}
       <section 
         className="rounded-[24px] p-6 md:p-16 text-center shadow-sm overflow-hidden relative flex flex-col justify-center min-h-[250px] md:min-h-[300px] bg-dark"
