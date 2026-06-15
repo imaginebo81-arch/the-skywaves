@@ -29,8 +29,10 @@ function HomePage() {
       <FashionCourses />
       <BoutiqueCourses />
       
-      <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 py-16 bg-[#151b23]">
-        <Testimonials />
+      <div className="w-full bg-[#151b23]">
+        <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 py-16">
+          <Testimonials />
+        </div>
       </div>
       <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 pb-24">
         <EnquiryForm />
