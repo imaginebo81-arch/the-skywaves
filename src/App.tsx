@@ -22,6 +22,8 @@ import CoursesPage from "./pages/CoursesPage";
 import AboutUs from "./components/AboutUs";
 import NotFound from "./components/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
+import PrivacyPolicy from "./components/PrivacyPolicy";
+import TermsOfService from "./components/TermsOfService";
 
 function HomePage() {
   return (
@@ -60,6 +62,8 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/about-us" element={<div className="py-20 px-4 md:px-12"><AboutUs /></div>} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/verification" element={<div className="py-20 px-4 md:px-12"><StudentVerification /></div>} />
             <Route path="/employment-verification" element={<div className="py-20 px-4 md:px-12"><EmploymentVerification /></div>} />
             <Route path="/contact" element={<div className="py-20 px-4 md:px-12"><ContactUs /></div>} />

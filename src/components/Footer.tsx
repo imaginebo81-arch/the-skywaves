@@ -48,9 +48,9 @@ export default function Footer() {
           © 2024 The Skywaves Educare. Elevating Knowledge.
         </p>
         <nav className="flex flex-wrap justify-center gap-6">
-          <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Privacy Policy</a>
-          <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Terms of Service</a>
-          <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Contact Us</a>
+          <Link to="/privacy-policy" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Privacy Policy</Link>
+          <Link to="/terms-of-service" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Terms of Service</Link>
+          <Link to="/contact" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Contact Us</Link>
           <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">Admin</a>
         </nav>
       </div>
