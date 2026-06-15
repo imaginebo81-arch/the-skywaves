@@ -113,7 +113,7 @@ export default function Header() {
                 Student Verification
               </Link>
               <Link 
-                to="/verification" 
+                to="/employment-verification" 
                 onClick={() => setIsVerificationOpen(false)}
                 className="px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-[#eaa320] hover:pl-5 transition-all duration-200 font-medium"
               >
@@ -207,7 +207,7 @@ export default function Header() {
                 <div className="w-12 h-px bg-white/10" />
                 <Link 
                   onClick={() => setIsMobileMenuOpen(false)} 
-                  to="/verification" 
+                  to="/employment-verification" 
                   className="hover:text-[#eaa320] text-sm text-gray-300 hover:text-center transition-colors"
                 >
                   Employment Verification

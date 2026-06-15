@@ -15,6 +15,7 @@ import Testimonials from "./components/Testimonials";
 import EnquiryForm from "./components/EnquiryForm";
 import Footer from "./components/Footer";
 import StudentVerification from "./components/StudentVerification";
+import EmploymentVerification from "./components/EmploymentVerification";
 import ContactUs from "./components/ContactUs";
 import CoursesPage from "./pages/CoursesPage";
 import AboutUs from "./components/AboutUs";
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/about" element={<div className="py-20 px-4 md:px-12"><AboutUs /></div>} />
             <Route path="/verification" element={<div className="py-20 px-4 md:px-12"><StudentVerification /></div>} />
+            <Route path="/employment-verification" element={<div className="py-20 px-4 md:px-12"><EmploymentVerification /></div>} />
             <Route path="/contact" element={<div className="py-20 px-4 md:px-12"><ContactUs /></div>} />
           </Routes>
         </main>

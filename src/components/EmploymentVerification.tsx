@@ -1,7 +1,7 @@
-import { CheckCircle, Award } from "lucide-react";
+import { CheckCircle, BriefcaseBusiness } from "lucide-react";
 import React, { useState } from "react";
 
-export default function StudentVerification() {
+export default function EmploymentVerification() {
   const [verified, setVerified] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -20,7 +20,7 @@ export default function StudentVerification() {
             Verification Successful
           </h2>
           <p className="text-gray-600 text-lg">
-            Record found. The certification details are displayed below.
+            Record found. The employment details are displayed below.
           </p>
         </div>
 
@@ -30,24 +30,24 @@ export default function StudentVerification() {
           <div className="absolute bottom-0 left-0 w-full h-4 bg-[#eaa320]"></div>
           
           <div className="flex flex-col items-center text-center gap-6 relative z-10 border-4 border-double border-gray-100 p-8">
-            <Award className="text-[#eaa320] w-16 h-16" />
+            <BriefcaseBusiness className="text-[#eaa320] w-16 h-16" />
             
             <div className="space-y-4 w-full border-b border-gray-100 pb-8">
               <h3 className="font-serif text-3xl font-bold text-gray-900 uppercase tracking-widest">
-                Certificate of Completion
+                Certificate of Employment
               </h3>
               <p className="text-gray-500 uppercase tracking-widest text-sm">
-                Skywaves Educare
+                Skywaves Educare Administration
               </p>
             </div>
 
-            <div className="space-y-4 pt-4 w-full">
-              <p className="text-gray-600 italic text-lg">This certifies that</p>
+            <div className="space-y-4 pt-4 w-full text-center">
+              <p className="text-gray-600 italic text-lg">This is to certify that</p>
               <h4 className="font-serif text-4xl font-bold text-gray-900">
-                Rohit Kumar
+                Priya Sharma
               </h4>
               <p className="text-gray-600 text-lg mt-4 max-w-md mx-auto">
-                has successfully completed the requirements for the <strong>Advanced Diploma in Computer Science</strong> with exceptional performance.
+                was employed with us as a <strong>Senior Faculty Member</strong> from August 2021 to Present, rendering dedicated and exceptional service.
               </p>
             </div>
 
@@ -58,7 +58,7 @@ export default function StudentVerification() {
               </div>
               <div className="text-right border-t border-gray-300 pt-2 w-32">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Signature_of_John_Hancock.svg" alt="Signature" className="h-8 mx-auto -mt-6 mb-1 opacity-50 block" />
-                <p className="text-gray-900 font-bold text-sm">Director</p>
+                <p className="text-gray-900 font-bold text-sm">HR Manager</p>
                 <p className="text-gray-500 text-xs">Skywaves Educare</p>
               </div>
             </div>
@@ -66,7 +66,7 @@ export default function StudentVerification() {
         </div>
 
         <button onClick={() => setVerified(false)} className="btn-primary px-8 py-3 font-title-md text-title-md mt-4 cursor-pointer">
-          Verify Another Student
+          Verify Another Record
         </button>
       </section>
     );
@@ -76,10 +76,10 @@ export default function StudentVerification() {
     <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-3xl mx-auto w-full">
       <div className="mb-8 border-b border-outline-variant pb-6 text-center md:text-left">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">
-          Student Verification
+          Employment Verification
         </h2>
         <p className="text-gray-600 text-lg">
-          Please enter the student's date of birth and reference number to view their certification details.
+          Please enter the employee's date of birth and reference number to view their employment records.
         </p>
       </div>
 
@@ -97,12 +97,12 @@ export default function StudentVerification() {
 
         <div className="flex flex-col gap-2">
           <label className="text-sm font-label-sm text-on-surface-variant font-medium">
-            Reference Number / Roll Number
+            Employment Reference Number
           </label>
           <input
             required
             className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest focus:ring-[#eaa320] focus:border-[#eaa320] p-4 outline-none text-lg tracking-wider"
-            placeholder="e.g. SKY-24-10592"
+            placeholder="e.g. SKY-EMP-4091"
             type="text"
           />
         </div>
@@ -112,7 +112,7 @@ export default function StudentVerification() {
             type="submit"
             className="btn-primary w-full py-4 text-xl font-bold cursor-pointer transition-transform active:scale-95"
           >
-            Verify Student
+            Verify Employment
           </button>
         </div>
       </form>
