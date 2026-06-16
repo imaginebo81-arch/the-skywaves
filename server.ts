@@ -1,13 +1,24 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import path from "path";
 import { createServer as createViteServer } from "vite";
+import { env } from "./server/env";
+import { buildApiRouter } from "./server/app";
+import { errorHandler } from "./server/middleware/errorHandler";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = env.PORT;
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  app.use(express.json({ limit: "1mb" }));
+  app.use(cookieParser());
+
+  // API routes are mounted before the SPA fallback so unknown /api/* paths
+  // return JSON, never the HTML shell.
+  app.use("/api", buildApiRouter());
+  app.use("/api", errorHandler);
+
+  if (env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

@@ -1,77 +1,55 @@
-import { CheckCircle, Award } from "lucide-react";
-import React, { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { CheckCircle, Award, Loader2, ExternalLink } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { useContent } from "../context/ContentContext";
+import { useMutation } from "../hooks/useApi";
+import { publicApi } from "../lib/api/public";
+import type { StudentResult } from "../lib/api/types";
+import ResultSheet from "./ResultSheet";
 
 export default function StudentVerification() {
-  const [verified, setVerified] = useState(false);
+  const { verification } = useContent();
+  const cfg = verification.student;
+  const { mutate, loading, error } = useMutation(publicApi.verifyStudent);
+  const [result, setResult] = useState<StudentResult | null>(null);
+  const [rollNumber, setRollNumber] = useState("");
+  const [dob, setDob] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setVerified(true);
+    try {
+      const res = await mutate(rollNumber.trim(), dob);
+      setResult(res);
+    } catch {
+      // error surfaced via hook
+    }
   };
 
-  if (verified) {
+  if (result) {
+    const printUrl = `/verification/result/${encodeURIComponent(result.student.rollNumber)}?token=${result.resultToken}`;
     return (
-      <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full text-center flex flex-col items-center gap-8">
+      <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full flex flex-col items-center gap-8">
         <Helmet>
           <title>Student Verified - Skywaves Educare</title>
         </Helmet>
-        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
+        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
           <CheckCircle size={40} />
         </div>
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Verification Successful
-          </h2>
-          <p className="text-gray-600 text-lg">
-            Record found. The certification details are displayed below.
-          </p>
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Verification Successful</h2>
+          <p className="text-gray-600 text-lg">Record found. The result details are displayed below.</p>
         </div>
 
-        <div className="w-full max-w-2xl border border-gray-200 rounded-[24px] p-8 md:p-12 relative overflow-hidden bg-white shadow-sm mt-4 text-left">
-          {/* Certificate decorative borders */}
-          <div className="absolute top-0 left-0 w-full h-4 bg-[#eaa320]"></div>
-          <div className="absolute bottom-0 left-0 w-full h-4 bg-[#eaa320]"></div>
-          
-          <div className="flex flex-col items-center text-center gap-6 relative z-10 border-4 border-double border-gray-100 p-8">
-            <Award className="text-[#eaa320] w-16 h-16" />
-            
-            <div className="space-y-4 w-full border-b border-gray-100 pb-8">
-              <h3 className="font-serif text-3xl font-bold text-gray-900 uppercase tracking-widest">
-                Certificate of Completion
-              </h3>
-              <p className="text-gray-500 uppercase tracking-widest text-sm">
-                Skywaves Educare
-              </p>
-            </div>
+        <ResultSheet result={result} />
 
-            <div className="space-y-4 pt-4 w-full">
-              <p className="text-gray-600 italic text-lg">This certifies that</p>
-              <h4 className="font-serif text-4xl font-bold text-gray-900">
-                Rohit Kumar
-              </h4>
-              <p className="text-gray-600 text-lg mt-4 max-w-md mx-auto">
-                has successfully completed the requirements for the <strong>Advanced Diploma in Computer Science</strong> with exceptional performance.
-              </p>
-            </div>
-
-            <div className="flex justify-between items-end w-full mt-12 px-8">
-              <div className="text-left border-t border-gray-300 pt-2 w-32">
-                <p className="text-gray-900 font-bold text-sm">15 Jun 2026</p>
-                <p className="text-gray-500 text-xs">Date</p>
-              </div>
-              <div className="text-right border-t border-gray-300 pt-2 w-32">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Signature_of_John_Hancock.svg" alt="Signature" className="h-8 mx-auto -mt-6 mb-1 opacity-50 block" />
-                <p className="text-gray-900 font-bold text-sm">Director</p>
-                <p className="text-gray-500 text-xs">Skywaves Educare</p>
-              </div>
-            </div>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <a href={printUrl} target="_blank" rel="noreferrer" className="btn-primary px-8 py-3 font-bold cursor-pointer flex items-center gap-2">
+            <ExternalLink size={18} /> View / Print Result
+          </a>
+          <button onClick={() => setResult(null)} className="btn-secondary text-gray-700 border-gray-300 px-8 py-3 font-bold cursor-pointer">
+            Verify Another Student
+          </button>
         </div>
-
-        <button onClick={() => setVerified(false)} className="btn-primary px-8 py-3 font-title-md text-title-md mt-4 cursor-pointer">
-          Verify Another Student
-        </button>
       </section>
     );
   }
@@ -83,47 +61,48 @@ export default function StudentVerification() {
         <meta name="description" content="Verify student certifications and qualifications instantly at Skywaves Educare." />
       </Helmet>
       <div className="mb-8 border-b border-outline-variant pb-6 text-center md:text-left">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">
-          Student Verification
-        </h2>
-        <p className="text-gray-600 text-lg">
-          Please enter the student's date of birth and reference number to view their certification details.
-        </p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">{cfg.heading}</h2>
+        <p className="text-gray-600 text-lg">{cfg.description}</p>
       </div>
 
       <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-label-sm text-on-surface-variant font-medium">
-            Date of Birth
-          </label>
+          <label className="text-sm font-label-sm text-on-surface-variant font-medium">Date of Birth</label>
           <input
             required
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
             className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest focus:ring-[#eaa320] focus:border-[#eaa320] p-4 outline-none text-lg"
             type="date"
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-label-sm text-on-surface-variant font-medium">
-            Reference Number / Roll Number
-          </label>
+          <label className="text-sm font-label-sm text-on-surface-variant font-medium">{cfg.refLabel}</label>
           <input
             required
+            value={rollNumber}
+            onChange={(e) => setRollNumber(e.target.value)}
             className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest focus:ring-[#eaa320] focus:border-[#eaa320] p-4 outline-none text-lg tracking-wider"
-            placeholder="e.g. SKY-24-10592"
+            placeholder={cfg.refPlaceholder}
             type="text"
           />
         </div>
 
-        <div className="mt-8">
-          <button
-            type="submit"
-            className="btn-primary w-full py-4 text-xl font-bold cursor-pointer transition-transform active:scale-95"
-          >
-            Verify Student
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <div className="mt-4">
+          <button type="submit" disabled={loading} className="btn-primary w-full py-4 text-xl font-bold cursor-pointer transition-transform active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60">
+            {loading && <Loader2 size={20} className="animate-spin" />}
+            {loading ? "Verifying..." : "Verify Student"}
           </button>
         </div>
       </form>
+
+      <div className="mt-8 flex items-center justify-center gap-2 text-gray-400">
+        <Award size={18} />
+        <span className="text-sm">Official Skywaves Educare verification</span>
+      </div>
     </section>
   );
 }

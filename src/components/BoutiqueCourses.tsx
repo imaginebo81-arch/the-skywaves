@@ -1,21 +1,21 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { coursesData, courseGradients } from "../data/courses";
+import { useContent } from "../context/ContentContext";
+import { useEnroll } from "../context/EnrollContext";
 
 export default function BoutiqueCourses() {
-  const course = coursesData.find(c => c.id === "boutique-worldwide");
+  const { sections, marketingCourses, courseGradients } = useContent();
+  const { openEnroll } = useEnroll();
+  const course = marketingCourses.find((c) => c.id === "boutique-worldwide") || marketingCourses.find((c) => c.category === "Boutique");
 
   return (
     <section className="w-full max-w-[1400px] mx-auto px-4 md:px-12 pb-16">
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Boutique Courses</h2>
-          <p className="text-gray-600">Exclusive training for high-end fashion and retail.</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{sections.boutique.heading}</h2>
+          <p className="text-gray-600">{sections.boutique.description}</p>
         </div>
-        <Link 
-          to="/courses"
-          className="text-[#eaa320] font-bold flex items-center gap-2 hover:text-[#de9b1f] transition-colors"
-        >
+        <Link to="/courses?category=Boutique" className="text-[#eaa320] font-bold flex items-center gap-2 hover:text-[#de9b1f] transition-colors">
           View all courses <ArrowRight size={18} />
         </Link>
       </div>
@@ -34,7 +34,7 @@ export default function BoutiqueCourses() {
               <p className="text-gray-600 text-base md:text-lg mb-8">{course.description}</p>
             </div>
             <div className="mt-auto">
-              <button className="btn-primary px-8 py-3 text-base flex justify-center items-center gap-2 relative overflow-hidden font-bold w-fit group/btn cursor-pointer">
+              <button onClick={() => openEnroll(course.academicCourseId)} className="btn-primary px-8 py-3 text-base flex justify-center items-center gap-2 relative overflow-hidden font-bold w-fit group/btn cursor-pointer">
                 <div className="absolute inset-0 w-[150%] h-full -translate-x-[150%] group-hover/btn:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 z-0" />
                 <span className="relative z-10">Enroll Now</span>
               </button>
