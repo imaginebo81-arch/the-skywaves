@@ -10,6 +10,7 @@ async function startServer() {
   const app = express();
   const PORT = env.PORT;
 
+  app.set("trust proxy", 1);
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
 
