@@ -1,22 +1,21 @@
-import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useContent } from "../context/ContentContext";
 import { useEnroll } from "../context/EnrollContext";
 import { useCoursesCatalog } from "../hooks/useCoursesCatalog";
 
 const courseGradients = [
-  "bg-gradient-to-br from-pink-50 to-white",
-  "bg-gradient-to-br from-orange-50 to-white",
+  "bg-gradient-to-br from-violet-50 to-white",
+  "bg-gradient-to-br from-indigo-50 to-white",
   "bg-gradient-to-br from-purple-50 to-white",
-  "bg-gradient-to-br from-rose-50 to-white",
+  "bg-gradient-to-br from-blue-50 to-white",
 ];
 
-const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80";
+const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&q=80";
 
-export default function FashionCourses() {
+export default function HypnosisCourses() {
   const { sections } = useContent();
   const { openEnroll } = useEnroll();
-  const { courses } = useCoursesCatalog("Fashion");
+  const { courses } = useCoursesCatalog("Hypnosis");
   const displayCourses = courses.slice(0, 4);
 
   if (displayCourses.length === 0) return null;
@@ -25,11 +24,11 @@ export default function FashionCourses() {
     <section className="w-full max-w-[1400px] mx-auto px-4 md:px-12 pb-16">
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">{sections.fashion.heading}</h2>
-          <p className="text-gray-600">{sections.fashion.description}</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{sections.hypnosis.heading}</h2>
+          <p className="text-gray-600">{sections.hypnosis.description}</p>
         </div>
-        <Link to="/courses?category=Fashion" className="text-[#eaa320] font-bold flex items-center gap-2 hover:text-[#de9b1f] transition-colors">
-          View all courses <ArrowRight size={18} />
+        <Link to="/courses?category=Hypnosis" className="text-[#eaa320] font-bold flex items-center gap-2 hover:text-[#de9b1f] transition-colors">
+          View all courses
         </Link>
       </div>
 
@@ -39,8 +38,12 @@ export default function FashionCourses() {
             key={course.id}
             className={`bento-card overflow-hidden flex flex-col border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 rounded-2xl group ${courseGradients[index % courseGradients.length]}`}
           >
-            <div className="h-32 overflow-hidden">
-              <img src={course.imageUrl || PLACEHOLDER_IMG} alt={course.courseName} className="w-full h-full object-cover" />
+            <div className="h-32 overflow-hidden relative">
+              <img
+                src={course.imageUrl || PLACEHOLDER_IMG}
+                alt={course.courseName}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
             </div>
             <div className="p-5 flex flex-col flex-grow gap-3">
               <div>

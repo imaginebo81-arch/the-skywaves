@@ -7,6 +7,7 @@ import { validate } from "../../middleware/validate";
 import { requireAdmin } from "../../middleware/auth";
 import { writeAudit } from "../../lib/audit";
 import { buildListResponse, parseListQuery, range } from "../../lib/pagination";
+import { sendEnquiryEmail } from "../../lib/email";
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -32,6 +33,7 @@ publicEnquiriesRouter.post(
       source: body.source,
     });
     if (error) throw ApiError.internal("Could not submit your message. Please try again.");
+    sendEnquiryEmail({ name: body.name!, email: body.email, phone: body.phone, course: body.course, message: body.message, source: body.source! }).catch(console.error);
     ok(res, { success: true }, 201);
   })
 );

@@ -64,13 +64,24 @@ export const adminApi = {
   bulkUpdateMarks: (entries: { rollNumber: string; subjectName: string; obtainedMarks: number | null }[]) =>
     api.post<{ ok: number; fail: number }>("/admin/marks/bulk", { entries }),
 
-  // Content
-  listContentKeys: () =>
-    api.get<{ keys: { key: string; isDefault: boolean; updatedAt: string | null }[] }>("/admin/content"),
-  getContent: (key: string) =>
-    api.get<{ key: string; data: unknown; isDefault: boolean; updatedAt: string | null }>(`/admin/content/${key}`),
-  saveContent: (key: string, data: unknown) => api.put(`/admin/content/${key}`, { data }),
-  restoreContent: (key: string) => api.post(`/admin/content/${key}/restore`),
+  // Notifications
+  getNotifications: () =>
+    api.get<{ count: number; items: { id: string; type: "enquiry" | "feedback"; name: string; source: string | null; createdAt: string }[] }>(
+      "/admin/notifications"
+    ),
+  markAllNotificationsRead: () => api.patch("/admin/notifications/read-all", {}),
+
+  // Image uploads
+  uploadCourseImage: (file: File) => {
+    const form = new FormData();
+    form.append("image", file);
+    return api.post<{ path: string }>("/admin/uploads/course-image", form);
+  },
+  uploadSubjectImage: (file: File) => {
+    const form = new FormData();
+    form.append("image", file);
+    return api.post<{ path: string }>("/admin/uploads/subject-image", form);
+  },
 
   // Settings
   listSettings: () =>

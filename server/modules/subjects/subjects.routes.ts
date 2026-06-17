@@ -13,6 +13,8 @@ const createSchema = z
     minMarks: z.coerce.number().int().min(0).max(1000).default(35),
     maxMarks: z.coerce.number().int().min(1).max(1000).default(100),
     displayOrder: z.coerce.number().int().min(0).default(0),
+    description: z.string().trim().max(5000).optional().nullable(),
+    imagePath: z.string().trim().max(500).optional().nullable(),
   })
   .refine((v) => v.minMarks <= v.maxMarks, {
     message: "minMarks cannot exceed maxMarks",
@@ -24,6 +26,8 @@ const updateSchema = z.object({
   minMarks: z.coerce.number().int().min(0).max(1000).optional(),
   maxMarks: z.coerce.number().int().min(1).max(1000).optional(),
   displayOrder: z.coerce.number().int().min(0).optional(),
+  description: z.string().trim().max(5000).optional().nullable(),
+  imagePath: z.string().trim().max(500).optional().nullable(),
 });
 
 export const adminSubjectsRouter = Router();

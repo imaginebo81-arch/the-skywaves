@@ -11,7 +11,7 @@ import TrustIndicators from "./components/TrustIndicators";
 import FeaturedCourses from "./components/FeaturedCourses";
 import EnglishCourses from "./components/EnglishCourses";
 import FashionCourses from "./components/FashionCourses";
-import BoutiqueCourses from "./components/BoutiqueCourses";
+import HypnosisCourses from "./components/HypnosisCourses";
 import Testimonials from "./components/Testimonials";
 import EnquiryForm from "./components/EnquiryForm";
 import Footer from "./components/Footer";
@@ -24,6 +24,8 @@ import NotFound from "./components/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsOfService from "./components/TermsOfService";
+import FashionPage from "./pages/FashionPage";
+import HypnosisPage from "./pages/HypnosisPage";
 import ResultPrint from "./pages/ResultPrint";
 import AdminApp from "./admin/AdminApp";
 import RegistrationModal from "./components/RegistrationModal";
@@ -43,7 +45,7 @@ function HomePage() {
       <FeaturedCourses />
       <EnglishCourses />
       <FashionCourses />
-      <BoutiqueCourses />
+      <HypnosisCourses />
 
       <div className="w-full bg-[#151b23]">
         <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 py-16">
@@ -66,6 +68,8 @@ function PublicSite() {
           <Route path="/" element={<HomePage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/about-us" element={<div className="py-20 px-4 md:px-12"><AboutUs /></div>} />
+          <Route path="/fashion" element={<FashionPage />} />
+          <Route path="/hypnosis" element={<HypnosisPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/verification" element={<div className="py-20 px-4 md:px-12"><StudentVerification /></div>} />

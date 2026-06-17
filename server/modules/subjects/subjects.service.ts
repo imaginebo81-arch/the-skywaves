@@ -9,13 +9,15 @@ export interface SubjectDto {
   minMarks: number;
   maxMarks: number;
   displayOrder: number;
+  description: string | null;
+  imagePath: string | null;
   createdAt: string;
   updatedAt: string | null;
   deletedAt: string | null;
 }
 
 const SELECT =
-  "id, course_id, subject_name, min_marks, max_marks, display_order, created_at, updated_at, deleted_at";
+  "id, course_id, subject_name, min_marks, max_marks, display_order, description, image_path, created_at, updated_at, deleted_at";
 
 function toDto(row: Record<string, unknown>): SubjectDto {
   return {
@@ -25,6 +27,8 @@ function toDto(row: Record<string, unknown>): SubjectDto {
     minMarks: Number(row.min_marks),
     maxMarks: Number(row.max_marks),
     displayOrder: Number(row.display_order),
+    description: (row.description as string) ?? null,
+    imagePath: (row.image_path as string) ?? null,
     createdAt: row.created_at as string,
     updatedAt: (row.updated_at as string) ?? null,
     deletedAt: (row.deleted_at as string) ?? null,
@@ -48,6 +52,8 @@ export function toSubjectRow(input: {
   minMarks?: number;
   maxMarks?: number;
   displayOrder?: number;
+  description?: string | null;
+  imagePath?: string | null;
 }) {
   const row: Record<string, unknown> = {};
   if (input.courseId !== undefined) row.course_id = input.courseId;
@@ -55,6 +61,8 @@ export function toSubjectRow(input: {
   if (input.minMarks !== undefined) row.min_marks = input.minMarks;
   if (input.maxMarks !== undefined) row.max_marks = input.maxMarks;
   if (input.displayOrder !== undefined) row.display_order = input.displayOrder;
+  if (input.description !== undefined) row.description = input.description;
+  if (input.imagePath !== undefined) row.image_path = input.imagePath;
   return row;
 }
 

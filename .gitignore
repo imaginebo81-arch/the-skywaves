@@ -4,5 +4,19 @@ dist/
 coverage/
 .DS_Store
 *.log
-.env*
+
+# Environment / secrets
+.env
+.env.*
 !.env.example
+
+# Railway
+.railway/
+
+# Editor / OS
+.vscode/
+.idea/
+*.local
+Thumbs.db
+DEPLOYMENT.md
+package-lock.json

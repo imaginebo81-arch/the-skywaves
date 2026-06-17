@@ -10,6 +10,9 @@ interface Course {
   courseName: string;
   duration: string | null;
   status: string;
+  description: string | null;
+  imagePath: string | null;
+  category: string | null;
   deletedAt: string | null;
   archivedAt: string | null;
 }
@@ -23,7 +26,8 @@ export default function Courses() {
 
   const [editing, setEditing] = useState<Course | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ courseName: "", duration: "", status: "active" });
+  const [form, setForm] = useState({ courseName: "", duration: "", status: "active", description: "", category: "", imagePath: "" });
+  const [imageUploading, setImageUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ action: "delete" | "archive" | "restore"; course: Course } | null>(null);
@@ -36,16 +40,38 @@ export default function Courses() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ courseName: "", duration: "", status: "active" });
+    setForm({ courseName: "", duration: "", status: "active", description: "", category: "", imagePath: "" });
     setFormError(null);
     setShowForm(true);
   };
 
   const openEdit = (course: Course) => {
     setEditing(course);
-    setForm({ courseName: course.courseName, duration: course.duration ?? "", status: course.status });
+    setForm({
+      courseName: course.courseName,
+      duration: course.duration ?? "",
+      status: course.status,
+      description: course.description ?? "",
+      category: course.category ?? "",
+      imagePath: course.imagePath ?? "",
+    });
     setFormError(null);
     setShowForm(true);
+  };
+
+  const handleImageUploadCourse = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setImageUploading(true);
+    try {
+      const res = await adminApi.uploadCourseImage(file);
+      setForm((f) => ({ ...f, imagePath: res.path }));
+    } catch {
+      setFormError("Image upload failed");
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const handleSave = async (e: FormEvent) => {
@@ -53,7 +79,14 @@ export default function Courses() {
     setSaving(true);
     setFormError(null);
     try {
-      const payload = { courseName: form.courseName, duration: form.duration || null, status: form.status };
+      const payload = {
+        courseName: form.courseName,
+        duration: form.duration || null,
+        status: form.status,
+        description: form.description || null,
+        category: form.category || null,
+        imagePath: form.imagePath || null,
+      };
       if (editing) await adminApi.update("courses", editing.id, payload);
       else await adminApi.create("courses", payload);
       setShowForm(false);
@@ -216,19 +249,46 @@ export default function Courses() {
           <Field label="Course Name">
             <input required className={inputClass} value={form.courseName} onChange={(e) => setForm({ ...form, courseName: e.target.value })} />
           </Field>
-          <Field label="Duration">
-            <input className={inputClass} placeholder="e.g. 6 Months" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Duration">
+              <input className={inputClass} placeholder="e.g. 6 Months" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
+            </Field>
+            <Field label="Category">
+              <select className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                <option value="">Select category</option>
+                <option value="English">English</option>
+                <option value="Fashion">Fashion</option>
+                <option value="Boutique">Boutique</option>
+                <option value="Hypnosis">Hypnosis</option>
+                <option value="Computer">Computer</option>
+                <option value="Other">Other</option>
+              </select>
+            </Field>
+          </div>
           <Field label="Status">
             <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
           </Field>
+          <Field label="Description">
+            <textarea rows={3} className={inputClass + " resize-none"} placeholder="Short description for course cards" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </Field>
+          <Field label="Course Image">
+            <div className="flex items-center gap-3">
+              <input type="file" accept="image/*" className="hidden" id="course-img-upload" onChange={handleImageUploadCourse} />
+              <label htmlFor="course-img-upload" className={`${inputClass} cursor-pointer text-gray-500 flex-1 py-2`}>
+                {imageUploading ? "Uploading..." : form.imagePath ? "Change image" : "Upload image"}
+              </label>
+              {form.imagePath && (
+                <img src={form.imagePath} alt="preview" className="w-10 h-10 rounded object-cover border" />
+              )}
+            </div>
+          </Field>
           {formError && <ErrorBanner message={formError} />}
           <div className="flex justify-end gap-3 mt-2">
             <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            <Button type="submit" disabled={saving || imageUploading}>{saving ? "Saving..." : "Save"}</Button>
           </div>
         </form>
       </Modal>

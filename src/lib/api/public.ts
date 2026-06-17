@@ -50,4 +50,29 @@ export const publicApi = {
     message?: string;
     source: "enquiry" | "contact";
   }) => api.post<{ success: boolean }>("/public/enquiries", input),
+
+  submitFeedback: (input: {
+    name: string;
+    profession?: string;
+    review: string;
+    profile_photo_path?: string;
+  }) => api.post<{ success: boolean }>("/public/feedbacks", input),
+
+  getTestimonials: () =>
+    api.get<{ items: { id: string; name: string; role: string | null; quote: string; image_url: string | null }[] }>(
+      "/public/testimonials"
+    ),
+
+  getCoursesCatalog: () =>
+    api.get<{
+      courses: {
+        id: string;
+        courseName: string;
+        duration: string | null;
+        description: string | null;
+        imageUrl: string | null;
+        category: string | null;
+        subjects: { id: string; subjectName: string; description: string | null; imageUrl: string | null }[];
+      }[];
+    }>("/public/courses/catalog"),
 };

@@ -9,7 +9,8 @@ import Registrations from "./pages/Registrations";
 import Students from "./pages/Students";
 import StudentMarks from "./pages/StudentMarks";
 import Employees from "./pages/Employees";
-import WebsiteContent from "./pages/WebsiteContent";
+import Feedbacks from "./pages/Feedbacks";
+import TestimonialsAdmin from "./pages/TestimonialsAdmin";
 import SettingsPage from "./pages/Settings";
 import AuditLogs from "./pages/AuditLogs";
 import { Spinner } from "./components/ui";
@@ -35,7 +36,8 @@ function ProtectedRoutes() {
         <Route path="/admin/students" element={<Students />} />
         <Route path="/admin/marks" element={<StudentMarks />} />
         <Route path="/admin/employees" element={<Employees />} />
-        <Route path="/admin/content" element={<WebsiteContent />} />
+        <Route path="/admin/feedbacks" element={<Feedbacks />} />
+        <Route path="/admin/testimonials" element={<TestimonialsAdmin />} />
         <Route path="/admin/settings" element={<SettingsPage />} />
         <Route path="/admin/audit-logs" element={<AuditLogs />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />

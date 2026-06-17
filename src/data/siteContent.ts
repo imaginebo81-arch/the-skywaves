@@ -35,6 +35,7 @@ export interface SiteContent {
     english: { heading: string; description: string };
     fashion: { heading: string; description: string };
     boutique: { heading: string; description: string };
+    hypnosis: { heading: string; description: string };
   };
   marketingCourses: {
     id: string;
@@ -121,6 +122,8 @@ export const defaultSiteContent: SiteContent = {
   nav: {
     links: [
       { label: "Home", to: "/" },
+      { label: "Fashion", to: "/fashion" },
+      { label: "Hypnosis", to: "/hypnosis" },
       { label: "About Us", to: "/about-us" },
       { label: "Contact Us", to: "/contact" },
     ],
@@ -129,8 +132,6 @@ export const defaultSiteContent: SiteContent = {
       items: [
         { label: "Computer Courses", to: "/courses?category=Diploma" },
         { label: "English Courses", to: "/courses?category=English" },
-        { label: "Fashion Designing", to: "/courses?category=Fashion" },
-        { label: "Boutique Courses", to: "/courses?category=Boutique" },
       ],
     },
     verificationDropdown: {
@@ -167,12 +168,16 @@ export const defaultSiteContent: SiteContent = {
       description: "Enhance your language skills for better communication and confidence.",
     },
     fashion: {
-      heading: "Fashion Designing",
-      description: "From concept sketches to runway execution.",
+      heading: "Fashion Courses",
+      description: "From concept sketches to runway execution and high-end boutique retail.",
     },
     boutique: {
       heading: "Boutique Courses",
       description: "Exclusive training for high-end fashion and retail.",
+    },
+    hypnosis: {
+      heading: "Hypnosis Courses",
+      description: "Master the art and science of clinical hypnotherapy.",
     },
   },
   marketingCourses: coursesData.map((c) => ({ ...c, academicCourseId: null })),
@@ -263,11 +268,11 @@ export const defaultSiteContent: SiteContent = {
     subheading:
       "We would love to hear from you. Reach out to our team for any inquiries, admissions details, or just to say hello.",
     locationHeading: "Our Location",
-    addressLines: ["123 Education Lane, Knowledge Park", "New Delhi, Delhi 110001, India"],
+    addressLines: ["Near PNB Bank", "Adjoining Jio Mobile Office Street", "Dharamkot"],
     emailHeading: "Email",
     email: "admissions@skywaveseducare.com",
     phoneHeading: "Phone",
-    phone: "+91 800 555 0199",
+    phone: "Naveen Rajpoot | 95925-02100",
     mapEmbedUrl: MAP_EMBED,
   },
   enquiry: {
@@ -275,7 +280,7 @@ export const defaultSiteContent: SiteContent = {
     subheading:
       "Reach out to our admissions team. We're here to help you find the right path for your future.",
     email: "admissions@skywaveseducare.com",
-    phone: "+91 800 555 0199",
+    phone: "Naveen Rajpoot | 95925-02100",
     courseOptions: ["Computer Science", "Language Mastery", "Fashion Design", "Hypnotherapy", "Other"],
   },
   footer: {
@@ -292,8 +297,8 @@ export const defaultSiteContent: SiteContent = {
     courseLinks: [
       { label: "Computer Courses", to: "/courses?category=Diploma" },
       { label: "English Courses", to: "/courses?category=English" },
-      { label: "Fashion Designing", to: "/courses?category=Fashion" },
-      { label: "Boutique Courses", to: "/courses?category=Boutique" },
+      { label: "Fashion", to: "/fashion" },
+      { label: "Hypnosis", to: "/hypnosis" },
     ],
     bottomLinks: [
       { label: "Privacy Policy", to: "/privacy-policy" },

@@ -15,6 +15,8 @@ interface Subject {
   minMarks: number;
   maxMarks: number;
   displayOrder: number;
+  description: string | null;
+  imagePath: string | null;
 }
 
 export default function Subjects() {
@@ -26,9 +28,10 @@ export default function Subjects() {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subject | null>(null);
-  const [form, setForm] = useState({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: 0 });
+  const [form, setForm] = useState({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: 0, description: "", imagePath: "" });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
   const [confirm, setConfirm] = useState<Subject | null>(null);
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -62,16 +65,31 @@ export default function Subjects() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: subjects.length });
+    setForm({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: subjects.length, description: "", imagePath: "" });
     setFormError(null);
     setShowForm(true);
   };
 
   const openEdit = (s: Subject) => {
     setEditing(s);
-    setForm({ subjectName: s.subjectName, minMarks: s.minMarks, maxMarks: s.maxMarks, displayOrder: s.displayOrder });
+    setForm({ subjectName: s.subjectName, minMarks: s.minMarks, maxMarks: s.maxMarks, displayOrder: s.displayOrder, description: s.description ?? "", imagePath: s.imagePath ?? "" });
     setFormError(null);
     setShowForm(true);
+  };
+
+  const handleImageUploadSubject = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setImageUploading(true);
+    try {
+      const res = await adminApi.uploadSubjectImage(file);
+      setForm((f) => ({ ...f, imagePath: res.path }));
+    } catch {
+      setFormError("Image upload failed");
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const handleSave = async (e: FormEvent) => {
@@ -79,10 +97,18 @@ export default function Subjects() {
     setSaving(true);
     setFormError(null);
     try {
+      const payload = {
+        subjectName: form.subjectName,
+        minMarks: form.minMarks,
+        maxMarks: form.maxMarks,
+        displayOrder: form.displayOrder,
+        description: form.description || null,
+        imagePath: form.imagePath || null,
+      };
       if (editing) {
-        await adminApi.update("subjects", editing.id, form);
+        await adminApi.update("subjects", editing.id, payload);
       } else {
-        await adminApi.create("subjects", { courseId, ...form });
+        await adminApi.create("subjects", { courseId, ...payload });
       }
       setShowForm(false);
       loadSubjects(courseId);
@@ -251,10 +277,24 @@ export default function Subjects() {
               <input type="number" className={inputClass} value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })} />
             </Field>
           </div>
+          <Field label="Description">
+            <textarea rows={2} className={inputClass + " resize-none"} placeholder="Short description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </Field>
+          <Field label="Subject Image">
+            <div className="flex items-center gap-3">
+              <input type="file" accept="image/*" className="hidden" id="subject-img-upload" onChange={handleImageUploadSubject} />
+              <label htmlFor="subject-img-upload" className={`${inputClass} cursor-pointer text-gray-500 flex-1 py-2`}>
+                {imageUploading ? "Uploading..." : form.imagePath ? "Change image" : "Upload image"}
+              </label>
+              {form.imagePath && (
+                <img src={form.imagePath} alt="preview" className="w-10 h-10 rounded object-cover border" />
+              )}
+            </div>
+          </Field>
           {formError && <ErrorBanner message={formError} />}
           <div className="flex justify-end gap-3 mt-2">
             <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            <Button type="submit" disabled={saving || imageUploading}>{saving ? "Saving..." : "Save"}</Button>
           </div>
         </form>
       </Modal>

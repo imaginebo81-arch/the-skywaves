@@ -12,6 +12,9 @@ const schema = z.object({
   ADMIN_COOKIE_NAME: z.string().min(1).default("skw_admin"),
   JWT_EXPIRES_IN: z.string().default("8h"),
   RESULT_TOKEN_TTL_SECONDS: z.coerce.number().default(600),
+  GMAIL_APP_PASS: z.string().optional(),
+  GMAIL_APP_NAME: z.string().optional(),
+  ADMIN_EMAIL: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);
