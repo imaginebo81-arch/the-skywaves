@@ -12,7 +12,7 @@ export default function Header() {
   const verificationRef = useRef<HTMLDivElement>(null);
   const coursesRef = useRef<HTMLDivElement>(null);
 
-  const [home, ...otherLinks] = nav.links;
+  const [home, secondLink, ...otherLinks] = nav.links;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -37,6 +37,11 @@ export default function Header() {
           <Link to={home.to} className="font-semibold border-b-2 border-primary pb-1 hover:text-primary transition-all duration-200">
             {home.label}
           </Link>
+          {secondLink && (
+            <Link to={secondLink.to} className="hover:text-primary transition-all duration-200">
+              {secondLink.label}
+            </Link>
+          )}
           <div className="relative z-50 flex items-center" ref={coursesRef}>
             <button
               onClick={(e) => {
@@ -105,6 +110,11 @@ export default function Header() {
           <Link onClick={() => setIsMobileMenuOpen(false)} to={home.to} className="font-semibold text-lg border-b-2 border-primary pb-1">
             {home.label}
           </Link>
+          {secondLink && (
+            <Link onClick={() => setIsMobileMenuOpen(false)} to={secondLink.to} className="hover:text-primary text-lg transition-colors">
+              {secondLink.label}
+            </Link>
+          )}
           <div className="w-full px-6 flex flex-col items-center">
             <button onClick={() => setIsCoursesOpen(!isCoursesOpen)} className="flex items-center gap-2 hover:text-primary text-lg cursor-pointer transition-colors">
               {nav.coursesDropdown.label} <ChevronDown size={20} className={`transition-transform duration-200 ${isCoursesOpen ? "rotate-180" : ""}`} />

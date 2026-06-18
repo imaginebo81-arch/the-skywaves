@@ -8,11 +8,9 @@ import { downloadCsv, parseUploadedFile } from "../../lib/csv";
 interface Course {
   id: string;
   courseName: string;
-  duration: string | null;
   status: string;
   description: string | null;
   imagePath: string | null;
-  category: string | null;
   deletedAt: string | null;
   archivedAt: string | null;
 }
@@ -26,8 +24,9 @@ export default function Courses() {
 
   const [editing, setEditing] = useState<Course | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ courseName: "", duration: "", status: "active", description: "", category: "", imagePath: "" });
+  const [form, setForm] = useState({ courseName: "", status: "active", description: "", imagePath: "" });
   const [imageUploading, setImageUploading] = useState(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ action: "delete" | "archive" | "restore"; course: Course } | null>(null);
@@ -40,7 +39,8 @@ export default function Courses() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ courseName: "", duration: "", status: "active", description: "", category: "", imagePath: "" });
+    setForm({ courseName: "", status: "active", description: "", imagePath: "" });
+    setImagePreviewUrl(null);
     setFormError(null);
     setShowForm(true);
   };
@@ -49,17 +49,16 @@ export default function Courses() {
     setEditing(course);
     setForm({
       courseName: course.courseName,
-      duration: course.duration ?? "",
       status: course.status,
       description: course.description ?? "",
-      category: course.category ?? "",
       imagePath: course.imagePath ?? "",
     });
+    setImagePreviewUrl(null);
     setFormError(null);
     setShowForm(true);
   };
 
-  const handleImageUploadCourse = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
@@ -67,6 +66,7 @@ export default function Courses() {
     try {
       const res = await adminApi.uploadCourseImage(file);
       setForm((f) => ({ ...f, imagePath: res.path }));
+      setImagePreviewUrl(res.url ?? null);
     } catch {
       setFormError("Image upload failed");
     } finally {
@@ -81,10 +81,8 @@ export default function Courses() {
     try {
       const payload = {
         courseName: form.courseName,
-        duration: form.duration || null,
         status: form.status,
         description: form.description || null,
-        category: form.category || null,
         imagePath: form.imagePath || null,
       };
       if (editing) await adminApi.update("courses", editing.id, payload);
@@ -126,15 +124,15 @@ export default function Courses() {
   };
 
   const handleDownload = () => {
-    downloadCsv("courses.csv", ["courseName", "duration", "status"],
-      items.map(c => [c.courseName, c.duration ?? "", c.status])
+    downloadCsv("courses.csv", ["courseName", "status"],
+      items.map(c => [c.courseName, c.status])
     );
   };
 
   const handleSample = () => {
-    downloadCsv("courses_sample.csv", ["courseName", "duration", "status"], [
-      ["Computer Applications", "6 Months", "active"],
-      ["Fashion Design", "1 Year", "active"],
+    downloadCsv("courses_sample.csv", ["courseName", "status", "description"], [
+      ["Computer Applications", "active", "Master essential computer skills for the modern workplace"],
+      ["Fashion Design", "active", "Learn cutting-edge fashion design from industry professionals"],
     ]);
   };
 
@@ -148,7 +146,7 @@ export default function Courses() {
       const rows = await parseUploadedFile(file);
       const results = await Promise.allSettled(
         rows.filter(r => r["courseName"]?.trim()).map(r =>
-          adminApi.create("courses", { courseName: r["courseName"].trim(), duration: r["duration"] || null, status: r["status"] || "active" })
+          adminApi.create("courses", { courseName: r["courseName"].trim(), status: r["status"] || "active" })
         )
       );
       const ok = results.filter(r => r.status === "fulfilled").length;
@@ -207,7 +205,7 @@ export default function Courses() {
                   <input type="checkbox" checked={selected.size === items.length && items.length > 0} onChange={toggleAll} className="cursor-pointer accent-[#eaa320]" />
                 </th>
                 <th className="px-4 py-3 font-semibold">Course</th>
-                <th className="px-4 py-3 font-semibold">Duration</th>
+                <th className="px-4 py-3 font-semibold">Description</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold text-right">Actions</th>
               </tr>
@@ -219,7 +217,7 @@ export default function Courses() {
                     <input type="checkbox" checked={selected.has(course.id)} onChange={() => toggleSelect(course.id)} className="cursor-pointer accent-[#eaa320]" />
                   </td>
                   <td className="px-4 py-3 font-medium text-gray-900">{course.courseName}</td>
-                  <td className="px-4 py-3 text-gray-600">{course.duration ?? "-"}</td>
+                  <td className="px-4 py-3 text-gray-500 max-w-xs"><p className="line-clamp-1 text-sm">{course.description ?? "—"}</p></td>
                   <td className="px-4 py-3"><StatusBadge status={course.deletedAt ? "deleted" : course.archivedAt ? "inactive" : course.status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
@@ -249,22 +247,6 @@ export default function Courses() {
           <Field label="Course Name">
             <input required className={inputClass} value={form.courseName} onChange={(e) => setForm({ ...form, courseName: e.target.value })} />
           </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Duration">
-              <input className={inputClass} placeholder="e.g. 6 Months" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
-            </Field>
-            <Field label="Category">
-              <select className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                <option value="">Select category</option>
-                <option value="English">English</option>
-                <option value="Fashion">Fashion</option>
-                <option value="Boutique">Boutique</option>
-                <option value="Hypnosis">Hypnosis</option>
-                <option value="Computer">Computer</option>
-                <option value="Other">Other</option>
-              </select>
-            </Field>
-          </div>
           <Field label="Status">
             <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
               <option value="active">Active</option>
@@ -272,16 +254,19 @@ export default function Courses() {
             </select>
           </Field>
           <Field label="Description">
-            <textarea rows={3} className={inputClass + " resize-none"} placeholder="Short description for course cards" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <textarea rows={3} className={inputClass + " resize-none"} placeholder="Short description for this course" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
           <Field label="Course Image">
             <div className="flex items-center gap-3">
-              <input type="file" accept="image/*" className="hidden" id="course-img-upload" onChange={handleImageUploadCourse} />
+              <input type="file" accept="image/*" className="hidden" id="course-img-upload" onChange={handleImageUpload} />
               <label htmlFor="course-img-upload" className={`${inputClass} cursor-pointer text-gray-500 flex-1 py-2`}>
                 {imageUploading ? "Uploading..." : form.imagePath ? "Change image" : "Upload image"}
               </label>
-              {form.imagePath && (
-                <img src={form.imagePath} alt="preview" className="w-10 h-10 rounded object-cover border" />
+              {imagePreviewUrl && (
+                <img src={imagePreviewUrl} alt="preview" className="w-10 h-10 rounded object-cover border" />
+              )}
+              {form.imagePath && !imagePreviewUrl && (
+                <span className="text-xs text-gray-400 truncate max-w-[120px]">{form.imagePath.split("/").pop()}</span>
               )}
             </div>
           </Field>

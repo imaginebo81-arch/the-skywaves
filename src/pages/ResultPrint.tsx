@@ -1,12 +1,13 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { Printer, Download, Share2, Loader2 } from "lucide-react";
+import { Printer, Download, Share2, Loader2, ArrowLeft } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { useApi } from "../hooks/useApi";
 import { publicApi } from "../lib/api/public";
 import ResultSheet from "../components/ResultSheet";
+import GradeCard from "../components/GradeCard";
 
 export default function ResultPrint() {
-  const { rollNumber } = useParams();
+  const { rollNumber: _rollNumber } = useParams();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") ?? "";
 
@@ -21,11 +22,7 @@ export default function ResultPrint() {
       url: window.location.href,
     };
     if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch {
-        // user cancelled
-      }
+      try { await navigator.share(shareData); } catch { /* user cancelled */ }
     } else {
       try {
         await navigator.clipboard.writeText(window.location.href);
@@ -57,29 +54,51 @@ export default function ResultPrint() {
   const btnBase = "px-5 py-2.5 rounded-lg font-semibold text-sm cursor-pointer flex items-center gap-2 transition-colors";
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 print:bg-white print:py-0">
-      <Helmet>
-        <title>Result - {data.student.name}</title>
-      </Helmet>
+    <>
+      {/* Landscape A4 print style */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page { size: A4 landscape; margin: 10mm; }
+          .no-print { display: none !important; }
+          body { background: white !important; }
+          .print-sheet { width: 100% !important; min-height: unset !important; padding: 0 !important; box-shadow: none !important; }
+        }
+      ` }} />
 
-      <div className="no-print max-w-[210mm] mx-auto px-4 mb-6 flex flex-wrap gap-3 justify-end">
-        <button onClick={handlePrint} className={`${btnBase} bg-[#eaa320] hover:bg-[#de9b1f] text-gray-900`}>
-          <Printer size={18} /> Print
-        </button>
-        <button onClick={handlePrint} className={`${btnBase} bg-white border border-gray-300 text-gray-700 hover:bg-gray-50`}>
-          <Download size={18} /> Download PDF
-        </button>
-        <button onClick={handleShare} className={`${btnBase} bg-white border border-gray-300 text-gray-700 hover:bg-gray-50`}>
-          <Share2 size={18} /> Share
-        </button>
-      </div>
+      <div className="min-h-screen bg-gray-100 py-8 print:bg-white print:py-0">
+        <Helmet>
+          <title>Result - {data.student.name}</title>
+        </Helmet>
 
-      <div className="print-sheet bg-white mx-auto shadow-lg print:shadow-none flex flex-col" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
-        <ResultSheet result={data} />
-        <p className="text-center text-xs text-gray-400 mt-auto pt-8">
-          This is a computer-generated statement of marks from Skywaves Educare.
-        </p>
+        <div className="no-print max-w-[297mm] mx-auto px-4 mb-6 flex flex-wrap gap-3 justify-between items-center">
+          <button
+            onClick={() => { if (window.history.length > 1) window.history.back(); else window.location.href = "/verification"; }}
+            className={`${btnBase} bg-white border border-gray-300 text-gray-700 hover:bg-gray-50`}
+          >
+            <ArrowLeft size={18} /> Back
+          </button>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={handlePrint} className={`${btnBase} bg-[#eaa320] hover:bg-[#de9b1f] text-gray-900`}>
+              <Printer size={18} /> Print
+            </button>
+            <button onClick={handlePrint} className={`${btnBase} bg-white border border-gray-300 text-gray-700 hover:bg-gray-50`}>
+              <Download size={18} /> Download PDF
+            </button>
+            <button onClick={handleShare} className={`${btnBase} bg-white border border-gray-300 text-gray-700 hover:bg-gray-50`}>
+              <Share2 size={18} /> Share
+            </button>
+          </div>
+        </div>
+
+        {/* A4 landscape sheet: 297mm × 210mm */}
+        <div className="print-sheet bg-white mx-auto shadow-xl print:shadow-none" style={{ width: "297mm", minHeight: "210mm" }}>
+          {data.resultType === "gradecard" ? (
+            <GradeCard result={data} />
+          ) : (
+            <ResultSheet result={data} />
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { validate } from "../../middleware/validate";
 import { ApiError } from "../../lib/errors";
 import { verifyResultToken } from "../../lib/tokens";
 import { getResultByToken, verifyEmployee, verifyStudent } from "./verification.service";
+import { writeAudit } from "../../lib/audit";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -25,7 +26,14 @@ publicVerificationRouter.post(
   validate(studentSchema),
   asyncHandler(async (req, res) => {
     const body = req.body as z.infer<typeof studentSchema>;
-    ok(res, await verifyStudent(body.rollNumber, body.dateOfBirth));
+    try {
+      const result = await verifyStudent(body.rollNumber, body.dateOfBirth);
+      await writeAudit({ actorId: "public", action: "public.verify_student", entity: "verification", entityId: body.rollNumber.toUpperCase().trim(), newValue: { success: true } });
+      ok(res, result);
+    } catch (err) {
+      await writeAudit({ actorId: "public", action: "public.verify_student", entity: "verification", entityId: body.rollNumber.toUpperCase().trim(), newValue: { success: false, message: err instanceof Error ? err.message : "Not found" } }).catch(() => {});
+      throw err;
+    }
   })
 );
 
@@ -34,7 +42,14 @@ publicVerificationRouter.post(
   validate(employeeSchema),
   asyncHandler(async (req, res) => {
     const body = req.body as z.infer<typeof employeeSchema>;
-    ok(res, await verifyEmployee(body.employmentReferenceNumber, body.dateOfBirth));
+    try {
+      const result = await verifyEmployee(body.employmentReferenceNumber, body.dateOfBirth);
+      await writeAudit({ actorId: "public", action: "public.verify_employee", entity: "verification", entityId: body.employmentReferenceNumber.toUpperCase().trim(), newValue: { success: true } });
+      ok(res, result);
+    } catch (err) {
+      await writeAudit({ actorId: "public", action: "public.verify_employee", entity: "verification", entityId: body.employmentReferenceNumber.toUpperCase().trim(), newValue: { success: false, message: err instanceof Error ? err.message : "Not found" } }).catch(() => {});
+      throw err;
+    }
   })
 );
 

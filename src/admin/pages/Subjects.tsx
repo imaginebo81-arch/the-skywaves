@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, type FormEvent, type ChangeEvent } from "react";
 import { Plus, Pencil, Trash2, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { adminApi } from "../../lib/api/admin";
-import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass } from "../components/ui";
+import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, PhotoAvatar } from "../components/ui";
 import { downloadCsv, parseUploadedFile } from "../../lib/csv";
 
 interface Course {
@@ -17,6 +17,8 @@ interface Subject {
   displayOrder: number;
   description: string | null;
   imagePath: string | null;
+  imageUrl: string | null;
+  duration: string | null;
 }
 
 export default function Subjects() {
@@ -28,10 +30,11 @@ export default function Subjects() {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subject | null>(null);
-  const [form, setForm] = useState({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: 0, description: "", imagePath: "" });
+  const [form, setForm] = useState({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: 0, description: "", imagePath: "", duration: "" });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Subject | null>(null);
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -65,14 +68,16 @@ export default function Subjects() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: subjects.length, description: "", imagePath: "" });
+    setForm({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: subjects.length, description: "", imagePath: "", duration: "" });
+    setImagePreviewUrl(null);
     setFormError(null);
     setShowForm(true);
   };
 
   const openEdit = (s: Subject) => {
     setEditing(s);
-    setForm({ subjectName: s.subjectName, minMarks: s.minMarks, maxMarks: s.maxMarks, displayOrder: s.displayOrder, description: s.description ?? "", imagePath: s.imagePath ?? "" });
+    setForm({ subjectName: s.subjectName, minMarks: s.minMarks, maxMarks: s.maxMarks, displayOrder: s.displayOrder, description: s.description ?? "", imagePath: s.imagePath ?? "", duration: s.duration ?? "" });
+    setImagePreviewUrl(s.imageUrl ?? null);
     setFormError(null);
     setShowForm(true);
   };
@@ -85,6 +90,7 @@ export default function Subjects() {
     try {
       const res = await adminApi.uploadSubjectImage(file);
       setForm((f) => ({ ...f, imagePath: res.path }));
+      setImagePreviewUrl(res.url ?? null);
     } catch {
       setFormError("Image upload failed");
     } finally {
@@ -104,6 +110,7 @@ export default function Subjects() {
         displayOrder: form.displayOrder,
         description: form.description || null,
         imagePath: form.imagePath || null,
+        duration: form.duration || null,
       };
       if (editing) {
         await adminApi.update("subjects", editing.id, payload);
@@ -142,15 +149,15 @@ export default function Subjects() {
   };
 
   const handleDownload = () => {
-    downloadCsv("subjects.csv", ["subjectName", "minMarks", "maxMarks", "displayOrder"],
-      subjects.map(s => [s.subjectName, s.minMarks, s.maxMarks, s.displayOrder])
+    downloadCsv("subjects.csv", ["subjectName", "duration", "minMarks", "maxMarks", "description"],
+      subjects.map(s => [s.subjectName, s.duration ?? "", s.minMarks, s.maxMarks, s.description ?? ""])
     );
   };
 
   const handleSample = () => {
-    downloadCsv("subjects_sample.csv", ["subjectName", "minMarks", "maxMarks", "displayOrder"], [
-      ["Theory", "35", "100", "0"],
-      ["Practical", "35", "100", "1"],
+    downloadCsv("subjects_sample.csv", ["subjectName", "duration", "minMarks", "maxMarks", "description"], [
+      ["Theory of Design", "3 Months", "35", "100", "Fundamentals of design theory and principles"],
+      ["Practical Workshop", "2 Months", "40", "100", "Hands-on practical sessions with expert guidance"],
     ]);
   };
 
@@ -229,10 +236,12 @@ export default function Subjects() {
               <th className="px-4 py-3 w-10">
                 <input type="checkbox" checked={selected.size === subjects.length && subjects.length > 0} onChange={toggleAll} className="cursor-pointer accent-[#eaa320]" />
               </th>
-              <th className="px-4 py-3 font-semibold">Order</th>
+              <th className="px-4 py-3 w-12"></th>
               <th className="px-4 py-3 font-semibold">Subject</th>
-              <th className="px-4 py-3 font-semibold text-center">Min Marks</th>
-              <th className="px-4 py-3 font-semibold text-center">Max Marks</th>
+              <th className="px-4 py-3 font-semibold">Duration</th>
+              <th className="px-4 py-3 font-semibold text-center">Min</th>
+              <th className="px-4 py-3 font-semibold text-center">Max</th>
+              <th className="px-4 py-3 font-semibold">Description</th>
               <th className="px-4 py-3 font-semibold text-right">Actions</th>
             </tr>
           </thead>
@@ -242,10 +251,14 @@ export default function Subjects() {
                 <td className="px-4 py-3">
                   <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggleSelect(s.id)} className="cursor-pointer accent-[#eaa320]" />
                 </td>
-                <td className="px-4 py-3 text-gray-500">{s.displayOrder}</td>
+                <td className="px-4 py-3">
+                  <PhotoAvatar src={s.imageUrl} name={s.subjectName} size="sm" />
+                </td>
                 <td className="px-4 py-3 font-medium text-gray-900">{s.subjectName}</td>
-                <td className="px-4 py-3 text-center">{s.minMarks}</td>
-                <td className="px-4 py-3 text-center">{s.maxMarks}</td>
+                <td className="px-4 py-3 text-gray-600">{s.duration ?? "—"}</td>
+                <td className="px-4 py-3 text-center text-gray-600">{s.minMarks}</td>
+                <td className="px-4 py-3 text-center text-gray-600">{s.maxMarks}</td>
+                <td className="px-4 py-3 text-gray-500 max-w-[200px]"><p className="line-clamp-1 text-xs">{s.description ?? "—"}</p></td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" onClick={() => openEdit(s)}><Pencil size={16} /></Button>
@@ -255,7 +268,7 @@ export default function Subjects() {
               </tr>
             ))}
             {subjects.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-gray-400">No subjects for this course.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400">No subjects for this course.</td></tr>
             )}
           </tbody>
         </table>
@@ -266,17 +279,17 @@ export default function Subjects() {
           <Field label="Subject Name">
             <input required className={inputClass} value={form.subjectName} onChange={(e) => setForm({ ...form, subjectName: e.target.value })} />
           </Field>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Field label="Min Marks">
               <input type="number" className={inputClass} value={form.minMarks} onChange={(e) => setForm({ ...form, minMarks: Number(e.target.value) })} />
             </Field>
             <Field label="Max Marks">
               <input type="number" className={inputClass} value={form.maxMarks} onChange={(e) => setForm({ ...form, maxMarks: Number(e.target.value) })} />
             </Field>
-            <Field label="Order">
-              <input type="number" className={inputClass} value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })} />
-            </Field>
           </div>
+          <Field label="Duration">
+            <input className={inputClass} placeholder="e.g. 3 Months, 1 Year" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
+          </Field>
           <Field label="Description">
             <textarea rows={2} className={inputClass + " resize-none"} placeholder="Short description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
@@ -286,8 +299,8 @@ export default function Subjects() {
               <label htmlFor="subject-img-upload" className={`${inputClass} cursor-pointer text-gray-500 flex-1 py-2`}>
                 {imageUploading ? "Uploading..." : form.imagePath ? "Change image" : "Upload image"}
               </label>
-              {form.imagePath && (
-                <img src={form.imagePath} alt="preview" className="w-10 h-10 rounded object-cover border" />
+              {imagePreviewUrl && (
+                <img src={imagePreviewUrl} alt="preview" className="w-10 h-10 rounded object-cover border" />
               )}
             </div>
           </Field>

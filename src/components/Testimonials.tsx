@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, type ChangeEvent, type FormEvent } from "react";
+import { Camera } from "lucide-react";
 import { publicApi } from "../lib/api/public";
 
 interface Testimonial {
@@ -17,6 +18,9 @@ export default function Testimonials() {
   const hoverState = useRef(false);
 
   const [form, setForm] = useState({ name: "", profession: "", review: "" });
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -52,18 +56,46 @@ export default function Testimonials() {
     return () => cancelAnimationFrame(animationId);
   }, [testimonials]);
 
+  const handlePhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setSubmitError(null);
+    setPhotoPreview(URL.createObjectURL(file));
+    setPhotoUploading(true);
+    try {
+      const res = await publicApi.uploadFeedbackPhoto(file);
+      setPhotoPath(res.path);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : null;
+      setSubmitError(msg || "Photo upload failed. Please try again.");
+      setPhotoPreview(null);
+      setPhotoPath(null);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.review.trim() || !form.profession.trim()) return;
+    const name = form.name.trim();
+    const profession = form.profession.trim();
+    const review = form.review.trim();
+    if (!name || name.length < 2) { setSubmitError("Name must be at least 2 characters."); return; }
+    if (!profession) { setSubmitError("Designation / Profession is required."); return; }
+    if (!review || review.length < 10) { setSubmitError("Review must be at least 10 characters."); return; }
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await publicApi.submitFeedback({ name: form.name, profession: form.profession, review: form.review });
+      await publicApi.submitFeedback({ name, profession, review, profile_photo_path: photoPath ?? undefined });
       setSubmitted(true);
       setForm({ name: "", profession: "", review: "" });
+      setPhotoPath(null);
+      setPhotoPreview(null);
       setTimeout(() => setSubmitted(false), 5000);
-    } catch {
-      setSubmitError("Failed to submit. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : null;
+      setSubmitError(msg || "Failed to submit. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -148,9 +180,23 @@ export default function Testimonials() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Review</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Profile Photo <span className="text-gray-500 font-normal">(optional)</span></label>
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-gray-300 transition-all">
+                  <Camera size={15} />
+                  {photoUploading ? "Uploading..." : photoPath ? "Change photo" : "Upload photo"}
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={photoUploading} />
+                </label>
+                {photoPreview && (
+                  <img src={photoPreview} alt="preview" className="w-10 h-10 rounded-full object-cover border-2 border-white/20" />
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Review <span className="text-gray-500 font-normal">(min. 10 characters)</span></label>
               <textarea
                 required
+                minLength={10}
                 rows={3}
                 value={form.review}
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, review: e.target.value })}
@@ -161,7 +207,7 @@ export default function Testimonials() {
             {submitError && <p className="text-red-400 text-sm">{submitError}</p>}
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || photoUploading}
               className="mt-2 btn-primary w-full py-3 text-sm font-semibold cursor-pointer relative overflow-hidden flex justify-center items-center group/btn rounded-xl disabled:opacity-60"
             >
               <div className="absolute inset-0 w-[150%] h-full -translate-x-[150%] group-hover/btn:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 z-0" />

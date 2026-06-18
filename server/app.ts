@@ -17,7 +17,7 @@ import { publicUploadsRouter, adminUploadsRouter } from "./modules/storage/stora
 import { publicEnquiriesRouter, adminEnquiriesRouter } from "./modules/enquiries/enquiries.routes";
 import { publicFeedbacksRouter, adminFeedbacksRouter } from "./modules/feedbacks/feedbacks.routes";
 import { publicTestimonialsRouter, adminTestimonialsRouter } from "./modules/testimonials/testimonials.routes";
-import { adminSettingsRouter } from "./modules/settings/settings.routes";
+import { adminSettingsRouter, publicSettingsRouter } from "./modules/settings/settings.routes";
 import { adminAuditRouter } from "./modules/audit/audit.routes";
 import { adminDashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { adminUsersRouter } from "./modules/adminUsers/adminUsers.routes";
@@ -40,6 +40,7 @@ export function buildApiRouter(): Router {
   pub.use("/enquiries", publicEnquiriesRouter);
   pub.use("/feedbacks", publicFeedbacksRouter);
   pub.use("/testimonials", publicTestimonialsRouter);
+  pub.use("/settings", publicSettingsRouter);
   api.use("/public", pub);
 
   // Auth
@@ -67,7 +68,7 @@ export function buildApiRouter(): Router {
     "/notifications",
     requireAdmin,
     asyncHandler(async (_req, res) => {
-      const [{ data: enq }, { data: fb }] = await Promise.all([
+      const [enqResult, fbResult] = await Promise.allSettled([
         supabase
           .from("enquiries")
           .select("id, name, source, created_at")
@@ -84,9 +85,12 @@ export function buildApiRouter(): Router {
           .limit(20),
       ]);
 
+      const enq = enqResult.status === "fulfilled" ? (enqResult.value.data ?? []) : [];
+      const fb = fbResult.status === "fulfilled" ? (fbResult.value.data ?? []) : [];
+
       const items = [
-        ...(enq ?? []).map((e) => ({ id: e.id, type: "enquiry" as const, name: e.name, source: e.source, createdAt: e.created_at })),
-        ...(fb ?? []).map((f) => ({ id: f.id, type: "feedback" as const, name: f.name, source: null, createdAt: f.created_at })),
+        ...enq.map((e) => ({ id: e.id, type: "enquiry" as const, name: e.name, source: e.source, createdAt: e.created_at })),
+        ...fb.map((f) => ({ id: f.id, type: "feedback" as const, name: f.name, source: null, createdAt: f.created_at })),
       ]
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 20);

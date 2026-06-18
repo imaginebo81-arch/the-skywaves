@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, type FormEvent, type ChangeEvent } from "r
 import { Plus, Pencil, Archive, Trash2, RotateCcw, Search, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { adminApi } from "../../lib/api/admin";
-import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, StatusBadge } from "../components/ui";
+import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, StatusBadge, PhotoAvatar } from "../components/ui";
 import { downloadCsv, parseUploadedFile } from "../../lib/csv";
 
 interface Course { id: string; courseName: string; }
@@ -42,6 +42,9 @@ export default function Students() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
+  const [profilePhotoPath, setProfilePhotoPath] = useState<string | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ action: "archive" | "delete" | "restore"; student: Student } | null>(null);
@@ -59,6 +62,8 @@ export default function Students() {
   const openCreate = () => {
     setEditing(null);
     setForm({ ...EMPTY, courseId: courses[0]?.id ?? "" });
+    setProfilePhotoPath(null);
+    setProfilePhotoPreview(null);
     setFormError(null);
     setShowForm(true);
   };
@@ -70,19 +75,38 @@ export default function Students() {
       dateOfBirth: s.dateOfBirth, address: s.address ?? "", contactNumber: s.contactNumber ?? "",
       courseId: s.courseId, startDate: s.startDate ?? "", endDate: s.endDate ?? "", status: s.status,
     });
+    setProfilePhotoPath(s.profilePhotoUrl ? null : null);
+    setProfilePhotoPreview(s.profilePhotoUrl ?? null);
     setFormError(null);
     setShowForm(true);
+  };
+
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setPhotoUploading(true);
+    try {
+      const res = await adminApi.uploadStudentPhoto(file);
+      setProfilePhotoPath(res.path);
+      setProfilePhotoPreview(res.url ?? null);
+    } catch {
+      setFormError("Photo upload failed");
+    } finally {
+      setPhotoUploading(false);
+    }
   };
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setFormError(null);
-    const payload = {
+    const payload: Record<string, unknown> = {
       name: form.name, fatherName: form.fatherName || null, motherName: form.motherName || null,
       dateOfBirth: form.dateOfBirth, address: form.address || null, contactNumber: form.contactNumber || null,
       courseId: form.courseId, startDate: form.startDate || null, endDate: form.endDate || null, status: form.status,
     };
+    if (profilePhotoPath) payload.profilePhotoPath = profilePhotoPath;
     try {
       if (editing) await adminApi.update("students", editing.rollNumber, payload);
       else await adminApi.create("students", { rollNumber: form.rollNumber, ...payload });
@@ -239,11 +263,7 @@ export default function Students() {
                     <input type="checkbox" checked={selected.has(s.rollNumber)} onChange={() => toggleSelect(s.rollNumber)} className="cursor-pointer accent-[#eaa320]" />
                   </td>
                   <td className="px-4 py-3">
-                    {s.profilePhotoUrl ? (
-                      <img src={s.profilePhotoUrl} alt={s.name} className="w-9 h-9 rounded-full object-cover border border-gray-200" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">-</div>
-                    )}
+                    <PhotoAvatar src={s.profilePhotoUrl} name={s.name} />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-700 whitespace-nowrap">{s.rollNumber}</td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-600 whitespace-nowrap">{s.admissionNumber ?? "-"}</td>
@@ -307,10 +327,23 @@ export default function Students() {
           <div className="sm:col-span-2">
             <Field label="Address"><textarea className={inputClass} rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
           </div>
+          <div className="sm:col-span-2">
+            <Field label="Profile Photo">
+              <div className="flex items-center gap-3">
+                <input type="file" accept="image/*" className="hidden" id="student-photo-upload" onChange={handlePhotoUpload} />
+                <label htmlFor="student-photo-upload" className={`${inputClass} cursor-pointer text-gray-500 flex-1 py-2`}>
+                  {photoUploading ? "Uploading..." : profilePhotoPath || profilePhotoPreview ? "Change photo" : "Upload photo"}
+                </label>
+                {profilePhotoPreview && (
+                  <img src={profilePhotoPreview} alt="preview" className="w-10 h-10 rounded-full object-cover border" />
+                )}
+              </div>
+            </Field>
+          </div>
           {formError && <div className="sm:col-span-2"><ErrorBanner message={formError} /></div>}
           <div className="sm:col-span-2 flex justify-end gap-3 mt-2">
             <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            <Button type="submit" disabled={saving || photoUploading}>{saving ? "Saving..." : "Save"}</Button>
           </div>
         </form>
       </Modal>

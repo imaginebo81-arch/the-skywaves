@@ -5,6 +5,7 @@ import { useContent } from "../context/ContentContext";
 import { useMutation } from "../hooks/useApi";
 import { publicApi } from "../lib/api/public";
 import type { StudentResult } from "../lib/api/types";
+import GradeCard from "./GradeCard";
 import ResultSheet from "./ResultSheet";
 
 export default function StudentVerification() {
@@ -28,7 +29,7 @@ export default function StudentVerification() {
   if (result) {
     const printUrl = `/verification/result/${encodeURIComponent(result.student.rollNumber)}?token=${result.resultToken}`;
     return (
-      <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full flex flex-col items-center gap-8">
+      <section className="bento-card p-6 md:p-10 bg-surface-container-lowest max-w-5xl mx-auto w-full flex flex-col items-center gap-8">
         <Helmet>
           <title>Student Verified - Skywaves Educare</title>
         </Helmet>
@@ -40,9 +41,13 @@ export default function StudentVerification() {
           <p className="text-gray-600 text-lg">Record found. The result details are displayed below.</p>
         </div>
 
-        <ResultSheet result={result} />
+        <button onClick={() => setResult(null)} className="btn-primary px-8 py-3 font-bold cursor-pointer">
+          ← Verify Another Student
+        </button>
 
-        <div className="flex flex-col sm:flex-row gap-4">
+        {result.resultType === "gradecard" ? <GradeCard result={result} /> : <ResultSheet result={result} />}
+
+        <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
           <a href={printUrl} target="_blank" rel="noreferrer" className="btn-primary px-8 py-3 font-bold cursor-pointer flex items-center gap-2">
             <ExternalLink size={18} /> View / Print Result
           </a>

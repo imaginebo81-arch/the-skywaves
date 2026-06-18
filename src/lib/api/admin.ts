@@ -53,15 +53,20 @@ export const adminApi = {
   getResultToken: (rollNumber: string) =>
     api.get<{ token: string }>(`/admin/students/${rollNumber}/result-token`),
 
-  // Marks (flat admin list)
+  // Marks (student-based admin list)
   listAllMarks: (params?: ListParams) =>
     api.get<Paginated<{
-      markId: string; rollNumber: string; studentName: string;
-      courseId: string; courseName: string | null; subjectName: string;
-      minMarks: number; maxMarks: number; obtainedMarks: number | null;
+      rollNumber: string; studentName: string; courseId: string; courseName: string | null;
+      grade: string | null; subjectsCount: number; marksEntered: number;
+      resultType: "marksheet" | "gradecard" | "pending"; passed: boolean;
+      percentage: number; hasPendingMarks: boolean;
+      marks: Array<{ markId: string; subjectId: string; subjectName: string; obtainedMarks: number | null; subjectGrade: string | null; minMarks: number; maxMarks: number }>;
     }>>("/admin/marks", params),
   deleteMark: (markId: string) => api.del(`/admin/marks/${markId}`),
-  bulkUpdateMarks: (entries: { rollNumber: string; subjectName: string; obtainedMarks: number | null }[]) =>
+  clearStudentMarks: (rollNumber: string) => api.del(`/admin/marks/student/${rollNumber}`),
+  setStudentGrade: (rollNumber: string, grade: string | null) =>
+    api.post<{ success: boolean }>("/admin/marks/set-grade", { rollNumber, grade }),
+  bulkUpdateMarks: (entries: { rollNumber: string; subjectName?: string | null; obtainedMarks?: number | null; grade?: string | null; courseGrade?: string | null }[]) =>
     api.post<{ ok: number; fail: number }>("/admin/marks/bulk", { entries }),
 
   // Notifications
@@ -75,12 +80,22 @@ export const adminApi = {
   uploadCourseImage: (file: File) => {
     const form = new FormData();
     form.append("image", file);
-    return api.post<{ path: string }>("/admin/uploads/course-image", form);
+    return api.post<{ path: string; url: string | null }>("/admin/uploads/course-image", form);
   },
   uploadSubjectImage: (file: File) => {
     const form = new FormData();
     form.append("image", file);
-    return api.post<{ path: string }>("/admin/uploads/subject-image", form);
+    return api.post<{ path: string; url: string | null }>("/admin/uploads/subject-image", form);
+  },
+  uploadStudentPhoto: (file: File) => {
+    const form = new FormData();
+    form.append("photo", file);
+    return api.post<{ path: string; url: string | null }>("/admin/uploads/student-photo", form);
+  },
+  uploadEmployeePhoto: (file: File) => {
+    const form = new FormData();
+    form.append("photo", file);
+    return api.post<{ path: string; url: string | null }>("/admin/uploads/employee-photo", form);
   },
 
   // Settings

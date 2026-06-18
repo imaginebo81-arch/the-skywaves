@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { adminApi } from "../../lib/api/admin";
-import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass } from "../components/ui";
+import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, PhotoAvatar } from "../components/ui";
 
 interface Testimonial {
   id: string;
@@ -122,9 +122,7 @@ export default function TestimonialsAdmin() {
                   <td className="px-4 py-3 text-gray-500">{t.display_order}</td>
                   <td className="px-4 py-3 font-medium text-gray-900">
                     <div className="flex items-center gap-2">
-                      {t.image_url && (
-                        <img src={t.image_url} alt={t.name} className="w-7 h-7 rounded-full object-cover" />
-                      )}
+                      <PhotoAvatar src={t.image_url} name={t.name} />
                       {t.name}
                     </div>
                   </td>

@@ -41,18 +41,18 @@ export default function HypnosisCourses() {
             <div className="h-32 overflow-hidden relative">
               <img
                 src={course.imageUrl || PLACEHOLDER_IMG}
-                alt={course.courseName}
+                alt={course.subjectName}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
             </div>
             <div className="p-5 flex flex-col flex-grow gap-3">
               <div>
-                {course.category && (
+                {course.courseName && (
                   <span className="text-xs font-bold bg-orange-50 text-orange-700 px-2.5 py-1 rounded-full mb-3 inline-block">
-                    {course.category}
+                    {course.courseName}
                   </span>
                 )}
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{course.courseName}</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{course.subjectName}</h3>
                 <p className="text-gray-600 text-xs line-clamp-3">{course.description}</p>
               </div>
               <div className="mt-auto pt-4 flex gap-2">

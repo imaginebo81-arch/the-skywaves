@@ -9,6 +9,7 @@ interface MarkJoinRow {
   id: string;
   subject_id: string;
   obtained_marks: number | null;
+  grade: string | null;
   subjects: {
     subject_name: string;
     min_marks: number;
@@ -20,7 +21,7 @@ interface MarkJoinRow {
 async function fetchMarkRows(rollNumber: string): Promise<{ id: string; mark: MarkRow }[]> {
   const { data, error } = await supabase
     .from("student_marks")
-    .select("id, subject_id, obtained_marks, subjects(subject_name, min_marks, max_marks, display_order)")
+    .select("id, subject_id, obtained_marks, grade, subjects(subject_name, min_marks, max_marks, display_order)")
     .eq("roll_number", rollNumber)
     .is("deleted_at", null);
   if (error) throw ApiError.internal("Failed to load marks");
@@ -31,6 +32,7 @@ async function fetchMarkRows(rollNumber: string): Promise<{ id: string; mark: Ma
         subjectId: r.subject_id,
         subjectName: r.subjects?.subject_name ?? "",
         obtainedMarks: r.obtained_marks,
+        grade: r.grade,
         minMarks: r.subjects?.min_marks ?? 0,
         maxMarks: r.subjects?.max_marks ?? 100,
         displayOrder: r.subjects?.display_order ?? 0,
@@ -48,7 +50,7 @@ export async function getStudentMarks(rollNumber: string) {
 
 export async function upsertStudentMarks(
   rollNumber: string,
-  marks: { subjectId: string; obtainedMarks: number | null }[],
+  marks: { subjectId: string; obtainedMarks: number | null; grade?: string | null }[],
   actorId: string
 ) {
   const { data: student } = await supabase
@@ -65,6 +67,7 @@ export async function upsertStudentMarks(
     roll_number: rollNumber,
     subject_id: m.subjectId,
     obtained_marks: m.obtainedMarks,
+    ...(m.grade !== undefined && { grade: m.grade }),
   }));
   const { error } = await supabase
     .from("student_marks")
@@ -83,10 +86,30 @@ export async function upsertStudentMarks(
   return getStudentResult(rollNumber);
 }
 
+export async function setStudentGrade(rollNumber: string, grade: string | null, actorId: string) {
+  const { data: existing } = await supabase
+    .from("students")
+    .select("roll_number, grade")
+    .eq("roll_number", rollNumber)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!existing) throw ApiError.notFound("Student not found");
+  const { error } = await supabase.from("students").update({ grade }).eq("roll_number", rollNumber);
+  if (error) throw ApiError.internal(`Failed to update grade: ${error.message}`);
+  await writeAudit({
+    actorId,
+    action: "marks.set_grade",
+    entity: "students",
+    entityId: rollNumber,
+    prevValue: { grade: (existing as { grade?: string | null }).grade ?? null },
+    newValue: { grade },
+  });
+}
+
 export async function getStudentResult(rollNumber: string) {
   const { data: student, error } = await supabase
     .from("students")
-    .select("roll_number, name, father_name, mother_name, date_of_birth, course_id, start_date, end_date, profile_photo_path, courses(course_name)")
+    .select("roll_number, name, father_name, mother_name, date_of_birth, course_id, start_date, end_date, profile_photo_path, grade, courses(course_name)")
     .eq("roll_number", rollNumber)
     .is("deleted_at", null)
     .maybeSingle();
@@ -98,6 +121,19 @@ export async function getStudentResult(rollNumber: string) {
   const summary = computeResult(rows.map((r) => r.mark), passPercentage);
 
   const course = (student as { courses?: { course_name?: string } | null }).courses;
+  const courseGrade = (student as { grade?: string | null }).grade ?? null;
+
+  const hasMarks = rows.some((r) => r.mark.obtainedMarks !== null);
+  const resultType: "marksheet" | "gradecard" | "pending" = hasMarks
+    ? "marksheet"
+    : courseGrade != null
+      ? "gradecard"
+      : "pending";
+
+  const { signedPhotoUrl } = await import("../storage/storage.service");
+  const profilePhotoUrl = await signedPhotoUrl(
+    (student as { profile_photo_path?: string | null }).profile_photo_path ?? null
+  );
 
   return {
     student: {
@@ -109,75 +145,127 @@ export async function getStudentResult(rollNumber: string) {
       courseName: course?.course_name ?? null,
       startDate: (student as { start_date?: string }).start_date ?? null,
       endDate: (student as { end_date?: string }).end_date ?? null,
+      profilePhotoUrl,
     },
     marks: rows.map((r) => ({
       subjectName: r.mark.subjectName,
       obtainedMarks: r.mark.obtainedMarks,
+      grade: r.mark.grade ?? null,
       minMarks: r.mark.minMarks,
       maxMarks: r.mark.maxMarks,
     })),
     summary: {
       ...summary,
       passPercentage,
-      grade: summary.passed ? gradeFor(summary.percentage) : "F",
+      grade: summary.hasPendingMarks ? "—" : summary.passed ? gradeFor(summary.percentage) : "F",
     },
+    resultType,
+    studentGrade: courseGrade,
   };
 }
 
 export async function listAllMarks(query: ListQuery, courseId?: string) {
-  let rollNumbers: string[] | null = null;
-  if (courseId) {
-    const { data: studs } = await supabase
-      .from("students")
-      .select("roll_number")
-      .eq("course_id", courseId)
-      .is("deleted_at", null);
-    rollNumbers = (studs ?? []).map(s => s.roll_number as string);
-    if (rollNumbers.length === 0) return buildListResponse([], 0, query.page, query.pageSize);
-  }
+  type StudentRow = {
+    roll_number: string;
+    name: string;
+    course_id: string;
+    grade: string | null;
+    courses: { course_name?: string } | null;
+  };
+  type RawMark = {
+    id: string;
+    roll_number: string;
+    subject_id: string;
+    obtained_marks: number | null;
+    grade: string | null;
+    subjects: { subject_name: string; min_marks: number; max_marks: number; display_order: number } | null;
+  };
 
-  let builder = supabase
-    .from("student_marks")
-    .select(
-      "id, roll_number, obtained_marks, students(name, course_id, deleted_at, courses(course_name)), subjects(subject_name, min_marks, max_marks, display_order)",
-      { count: "exact" }
-    )
-    .is("deleted_at", null);
+  let studentsBuilder = supabase
+    .from("students")
+    .select("roll_number, name, course_id, grade, courses(course_name)", { count: "exact" })
+    .is("deleted_at", null)
+    .is("archived_at", null);
 
-  if (rollNumbers) builder = builder.in("roll_number", rollNumbers);
-
+  if (courseId) studentsBuilder = studentsBuilder.eq("course_id", courseId);
   if (query.q) {
     const term = query.q.replace(/[%,]/g, " ").trim();
-    builder = builder.ilike("roll_number", `%${term}%`);
+    studentsBuilder = studentsBuilder.or(`name.ilike.%${term}%,roll_number.ilike.%${term}%`);
   }
 
   const [from, to] = range(query.page, query.pageSize);
-  const { data, error, count } = await builder.order("roll_number").range(from, to);
-  if (error) throw ApiError.internal(`Failed to list marks: ${error.message}`);
+  const { data: students, error: studErr, count } = await studentsBuilder
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
-  const items = (data ?? [])
-    .map((r: unknown) => {
-      const row = r as {
-        id: string;
-        roll_number: string;
-        obtained_marks: number | null;
-        students: { name: string; course_id: string; deleted_at: string | null; courses?: { course_name?: string } | null } | null;
-        subjects: { subject_name: string; min_marks: number; max_marks: number; display_order: number } | null;
-      };
-      if (row.students?.deleted_at) return null;
-      return {
-        markId: row.id,
-        rollNumber: row.roll_number,
-        studentName: row.students?.name ?? "",
-        courseId: row.students?.course_id ?? "",
-        courseName: row.students?.courses?.course_name ?? null,
-        subjectName: row.subjects?.subject_name ?? "",
-        minMarks: row.subjects?.min_marks ?? 0,
-        maxMarks: row.subjects?.max_marks ?? 100,
-        obtainedMarks: row.obtained_marks,
-      };
-    })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+  if (studErr) throw ApiError.internal(`Failed to list students: ${studErr.message}`);
+  if (!students?.length) return buildListResponse([], count ?? 0, query.page, query.pageSize);
+
+  const studs = students as unknown as StudentRow[];
+  const rollNumbers = studs.map((s) => s.roll_number);
+
+  const { data: marksData } = await supabase
+    .from("student_marks")
+    .select("id, roll_number, subject_id, obtained_marks, grade, subjects(subject_name, min_marks, max_marks, display_order)")
+    .in("roll_number", rollNumbers)
+    .is("deleted_at", null);
+
+  const rawMarks = (marksData ?? []) as unknown as RawMark[];
+  const passPercentage = await getPassPercentage();
+
+  const marksByRoll = new Map<string, RawMark[]>();
+  for (const m of rawMarks) {
+    const list = marksByRoll.get(m.roll_number) ?? [];
+    list.push(m);
+    marksByRoll.set(m.roll_number, list);
+  }
+
+  const items = studs.map((s) => {
+    const rawList = (marksByRoll.get(s.roll_number) ?? []).sort(
+      (a, b) => (a.subjects?.display_order ?? 0) - (b.subjects?.display_order ?? 0)
+    );
+    const markRows: MarkRow[] = rawList.map((r) => ({
+      subjectId: r.subject_id,
+      subjectName: r.subjects?.subject_name ?? "",
+      obtainedMarks: r.obtained_marks,
+      grade: r.grade,
+      minMarks: r.subjects?.min_marks ?? 0,
+      maxMarks: r.subjects?.max_marks ?? 100,
+      displayOrder: r.subjects?.display_order ?? 0,
+    }));
+
+    const summary = computeResult(markRows, passPercentage);
+    const hasMarks = markRows.some((r) => r.obtainedMarks !== null);
+    const courseGrade = s.grade;
+    const resultType: "marksheet" | "gradecard" | "pending" = hasMarks
+      ? "marksheet"
+      : courseGrade != null
+        ? "gradecard"
+        : "pending";
+
+    return {
+      rollNumber: s.roll_number,
+      studentName: s.name,
+      courseId: s.course_id,
+      courseName: s.courses?.course_name ?? null,
+      grade: courseGrade,
+      subjectsCount: markRows.length,
+      marksEntered: markRows.filter((r) => r.obtainedMarks !== null).length,
+      resultType,
+      passed: summary.passed,
+      percentage: summary.percentage,
+      hasPendingMarks: summary.hasPendingMarks,
+      marks: rawList.map((r) => ({
+        markId: r.id,
+        subjectId: r.subject_id,
+        subjectName: r.subjects?.subject_name ?? "",
+        obtainedMarks: r.obtained_marks,
+        subjectGrade: r.grade,
+        minMarks: r.subjects?.min_marks ?? 0,
+        maxMarks: r.subjects?.max_marks ?? 100,
+      })),
+    };
+  });
 
   return buildListResponse(items, count ?? 0, query.page, query.pageSize);
 }
@@ -206,28 +294,59 @@ export async function deleteMarkById(markId: string, actorId: string) {
   });
 }
 
+export async function clearStudentMarks(rollNumber: string, actorId: string) {
+  const { error } = await supabase
+    .from("student_marks")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("roll_number", rollNumber)
+    .is("deleted_at", null);
+  if (error) throw ApiError.internal("Failed to clear marks");
+
+  await supabase.from("students").update({ grade: null }).eq("roll_number", rollNumber);
+
+  await writeAudit({
+    actorId,
+    action: "marks.clear",
+    entity: "student_marks",
+    entityId: rollNumber,
+    newValue: null,
+  });
+}
+
 export async function bulkUpdateMarksByName(
-  entries: { rollNumber: string; subjectName: string; obtainedMarks: number | null }[],
+  entries: { rollNumber: string; subjectName?: string | null; obtainedMarks?: number | null; grade?: string | null; courseGrade?: string | null }[],
   actorId: string
 ) {
-  const byRoll = new Map<string, typeof entries>();
+  const courseGradesByRoll = new Map<string, string | null>();
   for (const e of entries) {
+    if (e.courseGrade !== undefined) {
+      courseGradesByRoll.set(e.rollNumber, e.courseGrade ?? null);
+    }
+  }
+  for (const [rollNumber, grade] of courseGradesByRoll) {
+    await setStudentGrade(rollNumber, grade, actorId).catch(() => {});
+  }
+
+  const markEntries = entries.filter((e) => e.subjectName?.trim());
+  const byRoll = new Map<string, typeof markEntries>();
+  for (const e of markEntries) {
     const list = byRoll.get(e.rollNumber) ?? [];
     list.push(e);
     byRoll.set(e.rollNumber, list);
   }
+
   let ok = 0;
   let fail = 0;
   for (const [rollNumber, rows] of byRoll.entries()) {
     try {
       const { marks } = await getStudentMarks(rollNumber);
-      const nameToId = new Map(marks.map(m => [m.subjectName.toLowerCase(), m.subjectId]));
+      const nameToId = new Map(marks.map((m) => [m.subjectName.toLowerCase(), m.subjectId]));
       const toSave = rows
-        .map(r => {
-          const subjectId = nameToId.get(r.subjectName.toLowerCase().trim());
-          return subjectId ? { subjectId, obtainedMarks: r.obtainedMarks } : null;
+        .map((r) => {
+          const subjectId = nameToId.get(r.subjectName!.toLowerCase().trim());
+          return subjectId ? { subjectId, obtainedMarks: r.obtainedMarks ?? null, grade: r.grade } : null;
         })
-        .filter((m): m is { subjectId: string; obtainedMarks: number | null } => m !== null);
+        .filter((m): m is NonNullable<typeof m> => m !== null);
       if (toSave.length > 0) {
         await upsertStudentMarks(rollNumber, toSave, actorId);
         ok += toSave.length;

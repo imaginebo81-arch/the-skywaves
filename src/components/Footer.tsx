@@ -1,9 +1,24 @@
 import { Facebook, Twitter, Linkedin, Instagram, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useContent } from "../context/ContentContext";
+import { publicApi } from "../lib/api/public";
+
+const SOCIAL_ICONS = [
+  { key: "facebook", Icon: Facebook },
+  { key: "instagram", Icon: Instagram },
+  { key: "youtube", Icon: Youtube },
+  { key: "twitter", Icon: Twitter },
+  { key: "linkedin", Icon: Linkedin },
+] as const;
 
 export default function Footer() {
   const { meta, footer } = useContent();
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    publicApi.getSocialLinks().then(setSocialLinks).catch(() => {});
+  }, []);
 
   return (
     <footer className="bg-dark text-white w-full border-t border-white/10">
@@ -13,8 +28,8 @@ export default function Footer() {
             <img alt={meta.orgName} className="h-[49px] object-contain object-left" src={meta.logoUrl} />
             <p className="text-gray-300 text-sm leading-relaxed">{footer.tagline}</p>
             <div className="flex gap-4">
-              {[Facebook, Twitter, Linkedin, Instagram, Youtube].map((Icon, i) => (
-                <a key={i} href="#" className="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center hover:bg-[#eaa320] hover:text-black hover:border-[#eaa320] transition-colors">
+              {SOCIAL_ICONS.filter(({ key }) => !!socialLinks[key]).map(({ key, Icon }) => (
+                <a key={key} href={socialLinks[key]} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center hover:bg-[#eaa320] hover:text-black hover:border-[#eaa320] transition-colors">
                   <Icon size={16} />
                 </a>
               ))}

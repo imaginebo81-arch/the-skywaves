@@ -8,6 +8,7 @@ import { requireAdmin } from "../../middleware/auth";
 import { writeAudit } from "../../lib/audit";
 import { buildListResponse, parseListQuery, range } from "../../lib/pagination";
 import { sendFeedbackEmail } from "../../lib/email";
+import { signedPhotoUrl } from "../storage/storage.service";
 
 const submitSchema = z.object({
   name: z.string().trim().min(2).max(200),
@@ -28,8 +29,12 @@ publicFeedbacksRouter.post(
       review: body.review,
       profile_photo_path: body.profile_photo_path ?? null,
     });
-    if (error) throw ApiError.internal("Could not submit your review. Please try again.");
+    if (error) {
+      console.error("[feedbacks] insert error:", error.message, error.details);
+      throw ApiError.internal("Could not submit your review. Please try again.");
+    }
     sendFeedbackEmail({ name: body.name!, profession: body.profession, review: body.review! }).catch(console.error);
+    writeAudit({ actorId: "public", action: "public.feedback_submit", entity: "feedbacks", entityId: body.name }).catch(() => {});
     ok(res, { success: true }, 201);
   })
 );
@@ -51,7 +56,13 @@ adminFeedbacksRouter.get(
     const [from, to] = range(q.page, q.pageSize);
     const { data, error, count } = await builder.order("created_at", { ascending: false }).range(from, to);
     if (error) throw ApiError.internal("Failed to load feedbacks");
-    ok(res, buildListResponse(data ?? [], count, q.page, q.pageSize));
+    const items = await Promise.all(
+      (data ?? []).map(async (fb) => ({
+        ...fb,
+        photoUrl: await signedPhotoUrl((fb as Record<string, unknown>).profile_photo_path as string | null),
+      }))
+    );
+    ok(res, buildListResponse(items, count, q.page, q.pageSize));
   })
 );
 

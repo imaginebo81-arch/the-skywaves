@@ -28,6 +28,7 @@ const createSchema = z.object({
   address: z.string().trim().max(500).optional().nullable(),
   contactNumber: z.string().trim().max(20).optional().nullable(),
   courseId: z.string().uuid(),
+  profilePhotoPath: z.string().optional().nullable(),
   startDate: dateStr.optional().nullable(),
   endDate: dateStr.optional().nullable(),
   status: z.enum(["active", "inactive", "completed"]).default("active"),

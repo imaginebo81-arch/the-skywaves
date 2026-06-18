@@ -106,7 +106,7 @@ export interface SiteContent {
 }
 
 const MAP_EMBED =
-  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d224345.83918970348!2d77.06889754725781!3d28.52758200617607!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd5b347eb62d%3A0x52c2b7494e204dce!2sNew%20Delhi%2C%20Delhi!5e0!3m2!1sen!2sin!4v1700000000000";
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3422.09213798441!2d75.2333025!3d30.939991100000004!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x391a0e11a102a2cf%3A0x856c0e3f201ffaed!2sSkywaves%20Educare!5e0!3m2!1sen!2sin!4v1781803130462!5m2!1sen!2sin";
 
 export const defaultSiteContent: SiteContent = {
   meta: {
@@ -122,9 +122,9 @@ export const defaultSiteContent: SiteContent = {
   nav: {
     links: [
       { label: "Home", to: "/" },
+      { label: "About Us", to: "/about-us" },
       { label: "Fashion", to: "/fashion" },
       { label: "Hypnosis", to: "/hypnosis" },
-      { label: "About Us", to: "/about-us" },
       { label: "Contact Us", to: "/contact" },
     ],
     coursesDropdown: {
@@ -159,7 +159,7 @@ export const defaultSiteContent: SiteContent = {
     { icon: "CheckCircle", title: "Online", subtitle: "Verified" },
   ],
   featured: {
-    heading: "Computer Courses",
+    heading: "All Courses",
     description: "Elevate your skills with our industry-relevant curriculum.",
   },
   sections: {
@@ -270,7 +270,7 @@ export const defaultSiteContent: SiteContent = {
     locationHeading: "Our Location",
     addressLines: ["Near PNB Bank", "Adjoining Jio Mobile Office Street", "Dharamkot"],
     emailHeading: "Email",
-    email: "admissions@skywaveseducare.com",
+    email: "skywaveseducare@gmail.com",
     phoneHeading: "Phone",
     phone: "Naveen Rajpoot | 95925-02100",
     mapEmbedUrl: MAP_EMBED,
@@ -279,7 +279,7 @@ export const defaultSiteContent: SiteContent = {
     heading: "Have Questions?",
     subheading:
       "Reach out to our admissions team. We're here to help you find the right path for your future.",
-    email: "admissions@skywaveseducare.com",
+    email: "skywaveseducare@gmail.com",
     phone: "Naveen Rajpoot | 95925-02100",
     courseOptions: ["Computer Science", "Language Mastery", "Fashion Design", "Hypnotherapy", "Other"],
   },
@@ -352,14 +352,14 @@ export const defaultSiteContent: SiteContent = {
       description:
         "Please enter the student's date of birth and reference number to view their certification details.",
       refLabel: "Reference Number / Roll Number",
-      refPlaceholder: "e.g. SKY-24-10592",
+      refPlaceholder: "e.g. SW/CV/KK/1234",
     },
     employee: {
       heading: "Employment Verification",
       description:
         "Please enter the employee's date of birth and reference number to view their employment records.",
       refLabel: "Employment Reference Number",
-      refPlaceholder: "e.g. SKY-EMP-4091",
+      refPlaceholder: "e.g. SW/CV/KK/1234",
       certificateTemplate:
         "This is to certify that {{name}} was employed with Skywaves Educare as {{designation}} from {{joiningDate}} to {{leavingDate}}, rendering dedicated and exceptional service.",
     },

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useApi } from "../../hooks/useApi";
 import { adminApi } from "../../lib/api/admin";
 import { PageHeader, Spinner, ErrorBanner, Button } from "../components/ui";
+import { formatDateTime } from "../../lib/dateUtils";
 
 export default function AuditLogs() {
   const [page, setPage] = useState(1);
@@ -20,15 +21,18 @@ export default function AuditLogs() {
       <div className="mb-4 flex gap-3">
         <select className={inputClass} value={entity} onChange={(e) => { setEntity(e.target.value); setPage(1); }}>
           <option value="">All entities</option>
-          <option value="courses">Courses</option>
-          <option value="subjects">Subjects</option>
+          <option value="verification">Verification</option>
+          <option value="enquiries">Enquiries</option>
+          <option value="feedbacks">Feedbacks</option>
           <option value="registrations">Registrations</option>
           <option value="students">Students</option>
           <option value="student_marks">Student Marks</option>
           <option value="employees">Employees</option>
+          <option value="courses">Courses</option>
+          <option value="subjects">Subjects</option>
           <option value="site_content">Website Content</option>
           <option value="settings">Settings</option>
-          <option value="admin_users">Admin Users</option>
+          <option value="admin_users">Admin Users (Auth)</option>
         </select>
       </div>
 
@@ -52,7 +56,7 @@ export default function AuditLogs() {
               <tbody className="divide-y divide-gray-100">
                 {data?.items.map((log) => (
                   <tr key={log.id}>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{new Date(log.createdAt).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDateTime(log.createdAt)}</td>
                     <td className="px-4 py-3 text-gray-700">{log.actor}</td>
                     <td className="px-4 py-3"><span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{log.action}</span></td>
                     <td className="px-4 py-3 text-gray-600">{log.entity}</td>

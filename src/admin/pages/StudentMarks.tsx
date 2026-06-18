@@ -5,26 +5,43 @@ import { adminApi } from "../../lib/api/admin";
 import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass } from "../components/ui";
 import { downloadCsv, parseUploadedFile } from "../../lib/csv";
 
-interface MarkEntry {
-  markId: string;
-  rollNumber: string;
-  studentName: string;
-  courseId: string;
-  courseName: string | null;
-  subjectName: string;
-  minMarks: number;
-  maxMarks: number;
-  obtainedMarks: number | null;
-}
-
-interface EditRow {
+interface SubjectMark {
   markId: string;
   subjectId: string;
   subjectName: string;
   obtainedMarks: number | null;
+  subjectGrade: string | null;
   minMarks: number;
   maxMarks: number;
 }
+
+interface StudentEntry {
+  rollNumber: string;
+  studentName: string;
+  courseId: string;
+  courseName: string | null;
+  grade: string | null;
+  subjectsCount: number;
+  marksEntered: number;
+  resultType: "marksheet" | "gradecard" | "pending";
+  passed: boolean;
+  percentage: number;
+  hasPendingMarks: boolean;
+  marks: SubjectMark[];
+}
+
+interface EditState {
+  rollNumber: string;
+  studentName: string;
+  courseGrade: string;
+  rows: { markId: string; subjectName: string; obtainedMarks: number | null; minMarks: number; maxMarks: number }[];
+}
+
+const RESULT_BADGE: Record<string, { label: string; cls: string }> = {
+  marksheet: { label: "Marksheet", cls: "bg-blue-100 text-blue-700" },
+  gradecard: { label: "Grade Card", cls: "bg-purple-100 text-purple-700" },
+  pending: { label: "Pending", cls: "bg-amber-100 text-amber-700" },
+};
 
 export default function StudentMarks() {
   const [q, setQ] = useState("");
@@ -38,66 +55,47 @@ export default function StudentMarks() {
 
   const { data: coursesData } = useApi(() => adminApi.list<{ id: string; courseName: string }>("courses", { pageSize: 100 }), []);
 
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<MarkEntry | null>(null);
-
+  const [confirmClear, setConfirmClear] = useState<StudentEntry | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [editRoll, setEditRoll] = useState<string | null>(null);
-  const [editRows, setEditRows] = useState<EditRow[]>([]);
+  const [edit, setEdit] = useState<EditState | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  const [newForm, setNewForm] = useState<{ rollNumber: string; subjectName: string; obtainedMarks: string } | null>(null);
+  const [newForm, setNewForm] = useState<{ rollNumber: string; courseGrade: string; subjectName: string; obtainedMarks: string } | null>(null);
   const [newSaving, setNewSaving] = useState(false);
   const [newError, setNewError] = useState<string | null>(null);
 
-  const items: MarkEntry[] = (data as { items?: MarkEntry[] } | null)?.items ?? [];
+  const items: StudentEntry[] = (data as unknown as { items?: StudentEntry[] } | null)?.items ?? [];
   const courses = coursesData?.items ?? [];
 
-  const filtered = q
-    ? items.filter(m =>
-        m.rollNumber.toLowerCase().includes(q.toLowerCase()) ||
-        m.studentName.toLowerCase().includes(q.toLowerCase())
-      )
-    : items;
-
-  const toggleSelect = (id: string) => setSelected(prev => {
-    const next = new Set(prev);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
-  });
-
-  const toggleAll = () => setSelected(selected.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map(m => m.markId)));
-
-  const bulkDelete = async () => {
-    await Promise.allSettled([...selected].map(id => adminApi.deleteMark(id)));
-    setSelected(new Set());
-    setConfirmBulkDelete(false);
-    reload();
-  };
-
-  const deleteSingle = async () => {
-    if (!confirmDelete) return;
-    await adminApi.deleteMark(confirmDelete.markId);
-    setConfirmDelete(null);
-    reload();
-  };
-
   const handleDownload = () => {
+    const rows: string[][] = [];
+    for (const s of items) {
+      if (s.marks.length === 0) {
+        rows.push([s.rollNumber, s.studentName, s.courseName ?? "", "", "", "", s.grade ?? ""]);
+      } else {
+        for (const m of s.marks) {
+          rows.push([s.rollNumber, s.studentName, s.courseName ?? "", m.subjectName, m.minMarks.toString(), m.maxMarks.toString(), m.obtainedMarks?.toString() ?? "", s.grade ?? ""]);
+        }
+      }
+    }
     downloadCsv("student_marks.csv",
-      ["rollNumber", "studentName", "courseName", "subjectName", "minMarks", "maxMarks", "obtainedMarks"],
-      items.map(m => [m.rollNumber, m.studentName, m.courseName ?? "", m.subjectName, m.minMarks, m.maxMarks, m.obtainedMarks ?? ""])
+      ["rollNumber", "studentName", "courseName", "subjectName", "minMarks", "maxMarks", "obtainedMarks", "courseGrade"],
+      rows
     );
   };
 
   const handleSample = () => {
     downloadCsv("student_marks_sample.csv",
-      ["rollNumber", "subjectName", "obtainedMarks"],
-      [["SR00000001", "Mathematics", "85"], ["SR00000001", "Science", "90"]]
+      ["rollNumber", "subjectName", "obtainedMarks", "courseGrade"],
+      [
+        ["SR00000001", "Mathematics", "85", ""],
+        ["SR00000001", "Science", "72", ""],
+        ["SR00000002", "", "", "A+"],
+      ]
     );
   };
 
@@ -110,11 +108,13 @@ export default function StudentMarks() {
     try {
       const rows = await parseUploadedFile(file);
       const entries = rows
-        .filter(r => r["rollNumber"]?.trim() && r["subjectName"]?.trim())
-        .map(r => ({
+        .filter((r) => r["rollNumber"]?.trim())
+        .map((r) => ({
           rollNumber: r["rollNumber"].trim(),
-          subjectName: r["subjectName"].trim(),
+          subjectName: r["subjectName"]?.trim() || null,
           obtainedMarks: r["obtainedMarks"] !== "" && r["obtainedMarks"] != null ? Number(r["obtainedMarks"]) : null,
+          grade: r["grade"]?.trim() || null,
+          courseGrade: r["courseGrade"]?.trim() || undefined,
         }));
       if (entries.length === 0) { setUploadMsg("No valid rows found"); setUploading(false); return; }
       const res = await adminApi.bulkUpdateMarks(entries);
@@ -127,21 +127,35 @@ export default function StudentMarks() {
     }
   };
 
-  const openEdit = (rollNumber: string) => {
-    const rows = items.filter(m => m.rollNumber === rollNumber);
-    setEditRows(rows.map(m => ({ markId: m.markId, subjectId: "", subjectName: m.subjectName, obtainedMarks: m.obtainedMarks, minMarks: m.minMarks, maxMarks: m.maxMarks })));
-    setEditRoll(rollNumber);
+  const openEdit = (s: StudentEntry) => {
+    setEdit({
+      rollNumber: s.rollNumber,
+      studentName: s.studentName,
+      courseGrade: s.grade ?? "",
+      rows: s.marks.map((m) => ({
+        markId: m.markId,
+        subjectName: m.subjectName,
+        obtainedMarks: m.obtainedMarks,
+        minMarks: m.minMarks,
+        maxMarks: m.maxMarks,
+      })),
+    });
     setEditError(null);
   };
 
   const saveEdit = async () => {
-    if (!editRoll) return;
+    if (!edit) return;
     setEditSaving(true);
     setEditError(null);
     try {
-      const entries = editRows.map(r => ({ rollNumber: editRoll, subjectName: r.subjectName, obtainedMarks: r.obtainedMarks }));
-      await adminApi.bulkUpdateMarks(entries);
-      setEditRoll(null);
+      const ops: Promise<unknown>[] = [];
+      ops.push(adminApi.setStudentGrade(edit.rollNumber, edit.courseGrade.trim() || null));
+      const markEntries = edit.rows
+        .filter((r) => r.subjectName)
+        .map((r) => ({ rollNumber: edit.rollNumber, subjectName: r.subjectName, obtainedMarks: r.obtainedMarks }));
+      if (markEntries.length > 0) ops.push(adminApi.bulkUpdateMarks(markEntries));
+      await Promise.all(ops);
+      setEdit(null);
       reload();
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "Failed to save");
@@ -155,17 +169,34 @@ export default function StudentMarks() {
     window.open(`/verification/result/${encodeURIComponent(rollNumber)}?token=${token}`, "_blank");
   };
 
+  const confirmAndClear = async () => {
+    if (!confirmClear) return;
+    await adminApi.clearStudentMarks(confirmClear.rollNumber).catch(() => {});
+    setConfirmClear(null);
+    reload();
+  };
+
   const saveNew = async (ev: FormEvent) => {
     ev.preventDefault();
     if (!newForm) return;
     setNewSaving(true);
     setNewError(null);
     try {
-      await adminApi.bulkUpdateMarks([{
-        rollNumber: newForm.rollNumber.trim(),
-        subjectName: newForm.subjectName.trim(),
-        obtainedMarks: newForm.obtainedMarks !== "" ? Number(newForm.obtainedMarks) : null,
-      }]);
+      const rollNumber = newForm.rollNumber.trim();
+      if (!rollNumber) throw new Error("Roll number is required");
+      const ops: Promise<unknown>[] = [];
+      if (newForm.courseGrade.trim()) {
+        ops.push(adminApi.setStudentGrade(rollNumber, newForm.courseGrade.trim()));
+      }
+      if (newForm.subjectName.trim()) {
+        ops.push(adminApi.bulkUpdateMarks([{
+          rollNumber,
+          subjectName: newForm.subjectName.trim(),
+          obtainedMarks: newForm.obtainedMarks !== "" ? Number(newForm.obtainedMarks) : null,
+        }]));
+      }
+      if (ops.length === 0) throw new Error("Enter a course grade or subject name");
+      await Promise.all(ops);
       setNewForm(null);
       reload();
     } catch (err) {
@@ -175,27 +206,22 @@ export default function StudentMarks() {
     }
   };
 
-  const passOrFail = (m: MarkEntry) => {
-    if (m.obtainedMarks == null) return null;
-    return m.obtainedMarks >= m.minMarks ? "Pass" : "Fail";
-  };
-
   return (
     <div>
       <PageHeader
         title="Student Marks"
-        subtitle="View and manage all student marks"
-        actions={<Button onClick={() => setNewForm({ rollNumber: "", subjectName: "", obtainedMarks: "" })}><Plus size={16} /> New Entry</Button>}
+        subtitle="All enrolled students · marks, grades and results"
+        actions={<Button onClick={() => setNewForm({ rollNumber: "", courseGrade: "", subjectName: "", obtainedMarks: "" })}><Plus size={16} /> New Entry</Button>}
       />
 
       <div className="flex flex-wrap gap-3 mb-4">
         <form onSubmit={(e) => { e.preventDefault(); setQ(searchInput); }} className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input className={`${inputClass} pl-10 w-64`} placeholder="Search roll number or name" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
+          <input className={`${inputClass} pl-10 w-64`} placeholder="Search roll no. or name" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </form>
-        <select className={`${inputClass} w-52`} value={courseFilter} onChange={(e) => { setCourseFilter(e.target.value); setSelected(new Set()); }}>
+        <select className={`${inputClass} w-52`} value={courseFilter} onChange={(e) => { setCourseFilter(e.target.value); }}>
           <option value="">All Courses</option>
-          {courses.map(c => <option key={c.id} value={c.id}>{c.courseName}</option>)}
+          {courses.map((c) => <option key={c.id} value={c.id}>{c.courseName}</option>)}
         </select>
       </div>
 
@@ -207,11 +233,6 @@ export default function StudentMarks() {
         </Button>
         <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleUpload} />
         {uploadMsg && <span className="text-sm text-gray-600">{uploadMsg}</span>}
-        {selected.size > 0 && (
-          <Button variant="danger" onClick={() => setConfirmBulkDelete(true)}>
-            <Trash2 size={15} /> Delete Selected ({selected.size})
-          </Button>
-        )}
       </div>
 
       {loading ? (
@@ -223,108 +244,161 @@ export default function StudentMarks() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600 text-left">
               <tr>
-                <th className="px-4 py-3 w-10">
-                  <input type="checkbox" checked={selected.size === filtered.length && filtered.length > 0} onChange={toggleAll} className="cursor-pointer accent-[#eaa320]" />
-                </th>
                 <th className="px-4 py-3 font-semibold whitespace-nowrap">Roll No.</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Student Name</th>
+                <th className="px-4 py-3 font-semibold">Name</th>
                 <th className="px-4 py-3 font-semibold">Course</th>
-                <th className="px-4 py-3 font-semibold">Subject</th>
-                <th className="px-4 py-3 font-semibold text-center">Min</th>
-                <th className="px-4 py-3 font-semibold text-center">Max</th>
-                <th className="px-4 py-3 font-semibold text-center">Obtained</th>
+                <th className="px-4 py-3 font-semibold text-center">Subjects</th>
+                <th className="px-4 py-3 font-semibold text-center">Grade</th>
+                <th className="px-4 py-3 font-semibold text-center">%</th>
                 <th className="px-4 py-3 font-semibold text-center">Result</th>
                 <th className="px-4 py-3 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((m) => {
-                const pf = passOrFail(m);
+              {items.map((s) => {
+                const badge = RESULT_BADGE[s.resultType];
+                const statusCls = s.resultType === "pending"
+                  ? "bg-amber-100 text-amber-700"
+                  : s.passed
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700";
+                const statusLabel = s.resultType === "pending" ? "Pending" : s.passed ? "Pass" : "Fail";
                 return (
-                  <tr key={m.markId} className={selected.has(m.markId) ? "bg-orange-50" : ""}>
-                    <td className="px-4 py-3">
-                      <input type="checkbox" checked={selected.has(m.markId)} onChange={() => toggleSelect(m.markId)} className="cursor-pointer accent-[#eaa320]" />
+                  <tr key={s.rollNumber} className="hover:bg-gray-50/50">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-700 whitespace-nowrap">{s.rollNumber}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{s.studentName}</td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{s.courseName ?? "-"}</td>
+                    <td className="px-4 py-3 text-center text-gray-500">
+                      {s.subjectsCount === 0 ? (
+                        <span className="text-gray-400 text-xs">—</span>
+                      ) : (
+                        <span>{s.marksEntered}/{s.subjectsCount}</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-700 whitespace-nowrap">{m.rollNumber}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{m.studentName}</td>
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{m.courseName ?? "-"}</td>
-                    <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{m.subjectName}</td>
-                    <td className="px-4 py-3 text-center text-gray-500">{m.minMarks}</td>
-                    <td className="px-4 py-3 text-center text-gray-500">{m.maxMarks}</td>
-                    <td className="px-4 py-3 text-center font-medium text-gray-900">{m.obtainedMarks ?? "-"}</td>
                     <td className="px-4 py-3 text-center">
-                      {pf === "Pass" && <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Pass</span>}
-                      {pf === "Fail" && <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium">Fail</span>}
-                      {pf === null && <span className="text-gray-400 text-xs">-</span>}
+                      {s.grade ? (
+                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-bold">{s.grade}</span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-600">
+                      {s.resultType === "marksheet" ? `${s.percentage}%` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusCls}`}>{statusLabel}</span>
+                      {s.resultType !== "pending" && (
+                        <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-medium ${badge.cls}`}>{badge.label}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" onClick={() => openEdit(m.rollNumber)}><Pencil size={15} /></Button>
-                        <Button variant="ghost" onClick={() => openPreview(m.rollNumber)}><ExternalLink size={15} /></Button>
-                        <Button variant="ghost" onClick={() => setConfirmDelete(m)}><Trash2 size={15} className="text-red-500" /></Button>
+                        <Button variant="ghost" title="Edit marks & grade" onClick={() => openEdit(s)}><Pencil size={15} /></Button>
+                        <Button variant="ghost" title="Preview result" onClick={() => void openPreview(s.rollNumber)}><ExternalLink size={15} /></Button>
+                        <Button variant="ghost" title="Clear all marks & grade" onClick={() => setConfirmClear(s)}><Trash2 size={15} className="text-red-500" /></Button>
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              {filtered.length === 0 && (
-                <tr><td colSpan={10} className="px-4 py-10 text-center text-gray-400">No marks found.</td></tr>
+              {items.length === 0 && (
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400">No students found.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       )}
 
-      <Modal open={editRoll !== null} onClose={() => setEditRoll(null)} title={`Edit Marks — ${editRoll}`} wide>
-        <table className="w-full text-sm mb-4">
-          <thead className="text-gray-500 text-left">
-            <tr>
-              <th className="py-2 font-semibold">Subject</th>
-              <th className="py-2 text-center font-semibold">Min</th>
-              <th className="py-2 text-center font-semibold">Max</th>
-              <th className="py-2 text-center font-semibold">Obtained</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {editRows.map((r, i) => (
-              <tr key={r.subjectName}>
-                <td className="py-2 font-medium text-gray-900">{r.subjectName}</td>
-                <td className="py-2 text-center text-gray-500">{r.minMarks}</td>
-                <td className="py-2 text-center text-gray-500">{r.maxMarks}</td>
-                <td className="py-2 text-center">
-                  <input
-                    type="number" min={0} max={r.maxMarks}
-                    className="w-20 rounded-lg border border-gray-300 px-2 py-1 text-center outline-none focus:border-[#eaa320]"
-                    value={r.obtainedMarks ?? ""}
-                    onChange={(e) => setEditRows(prev => prev.map((row, idx) => idx === i ? { ...row, obtainedMarks: e.target.value === "" ? null : Number(e.target.value) } : row))}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {editError && <ErrorBanner message={editError} />}
-        <div className="flex justify-end gap-3 mt-2">
-          <Button variant="secondary" onClick={() => setEditRoll(null)}><X size={15} /> Cancel</Button>
-          <Button onClick={saveEdit} disabled={editSaving}>
-            {editSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            {editSaving ? "Saving..." : "Save"}
-          </Button>
-        </div>
+      {/* Edit Modal */}
+      <Modal open={edit !== null} onClose={() => setEdit(null)} title={`Edit — ${edit?.studentName ?? ""} (${edit?.rollNumber ?? ""})`} wide>
+        {edit && (
+          <>
+            <div className="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-200">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Course Grade <span className="text-gray-400 font-normal">(for grade card result)</span></label>
+              <input
+                type="text" maxLength={3} placeholder="e.g. A+"
+                className={`${inputClass} w-40 uppercase font-bold tracking-wider`}
+                value={edit.courseGrade}
+                onChange={(e) => setEdit({ ...edit, courseGrade: e.target.value.toUpperCase() })}
+              />
+              <p className="text-xs text-gray-400 mt-1">Leave blank if student has subject marks instead.</p>
+            </div>
+
+            {edit.rows.length > 0 ? (
+              <>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Subject Marks</p>
+                <table className="w-full text-sm mb-4">
+                  <thead className="text-gray-500 text-left">
+                    <tr>
+                      <th className="py-2 font-semibold">Subject</th>
+                      <th className="py-2 text-center font-semibold">Min</th>
+                      <th className="py-2 text-center font-semibold">Max</th>
+                      <th className="py-2 text-center font-semibold">Obtained</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {edit.rows.map((r, i) => (
+                      <tr key={r.subjectName}>
+                        <td className="py-2 font-medium text-gray-900">{r.subjectName}</td>
+                        <td className="py-2 text-center text-gray-500">{r.minMarks}</td>
+                        <td className="py-2 text-center text-gray-500">{r.maxMarks}</td>
+                        <td className="py-2 text-center">
+                          <input
+                            type="number" min={0} max={r.maxMarks}
+                            className="w-24 rounded-lg border border-gray-300 px-2 py-1 text-center outline-none focus:border-[#eaa320]"
+                            value={r.obtainedMarks ?? ""}
+                            onChange={(e) => setEdit((prev) => prev ? {
+                              ...prev,
+                              rows: prev.rows.map((row, idx) => idx === i
+                                ? { ...row, obtainedMarks: e.target.value === "" ? null : Number(e.target.value) }
+                                : row)
+                            } : null)}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400 mb-4 italic">No subjects assigned to this student's course. Use Course Grade above.</p>
+            )}
+
+            {editError && <ErrorBanner message={editError} />}
+            <div className="flex justify-end gap-3 mt-2">
+              <Button variant="secondary" onClick={() => setEdit(null)}><X size={15} /> Cancel</Button>
+              <Button onClick={saveEdit} disabled={editSaving}>
+                {editSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                {editSaving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </>
+        )}
       </Modal>
 
+      {/* New Entry Modal */}
       <Modal open={newForm !== null} onClose={() => setNewForm(null)} title="New Mark Entry">
         {newForm && (
           <form onSubmit={saveNew} className="flex flex-col gap-4">
-            <Field label="Roll Number">
-              <input required className={inputClass} value={newForm.rollNumber} onChange={(e) => setNewForm({ ...newForm, rollNumber: e.target.value })} />
+            <Field label="Roll Number *">
+              <input required className={inputClass} placeholder="e.g. SR00000001" value={newForm.rollNumber} onChange={(e) => setNewForm({ ...newForm, rollNumber: e.target.value })} />
             </Field>
-            <Field label="Subject Name">
-              <input required className={inputClass} value={newForm.subjectName} onChange={(e) => setNewForm({ ...newForm, subjectName: e.target.value })} />
-            </Field>
-            <Field label="Obtained Marks">
-              <input type="number" min={0} className={inputClass} value={newForm.obtainedMarks} onChange={(e) => setNewForm({ ...newForm, obtainedMarks: e.target.value })} />
-            </Field>
+            <div className="border-t border-gray-100 pt-4">
+              <p className="text-xs text-gray-500 mb-3 font-medium">Fill Course Grade for a grade-card result, OR Subject + Marks for a marksheet result.</p>
+              <Field label="Course Grade (optional)">
+                <input type="text" maxLength={3} placeholder="e.g. A+" className={`${inputClass} uppercase`} value={newForm.courseGrade} onChange={(e) => setNewForm({ ...newForm, courseGrade: e.target.value.toUpperCase() })} />
+              </Field>
+            </div>
+            <div className="border-t border-gray-100 pt-4">
+              <Field label="Subject Name (optional)">
+                <input className={inputClass} placeholder="e.g. Mathematics" value={newForm.subjectName} onChange={(e) => setNewForm({ ...newForm, subjectName: e.target.value })} />
+              </Field>
+              <div className="mt-3">
+                <Field label="Obtained Marks (optional)">
+                  <input type="number" min={0} className={inputClass} placeholder="e.g. 85" value={newForm.obtainedMarks} onChange={(e) => setNewForm({ ...newForm, obtainedMarks: e.target.value })} />
+                </Field>
+              </div>
+            </div>
             {newError && <ErrorBanner message={newError} />}
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => setNewForm(null)}>Cancel</Button>
@@ -335,23 +409,13 @@ export default function StudentMarks() {
       </Modal>
 
       <ConfirmDialog
-        open={confirmDelete !== null}
-        title="Delete Mark"
-        message={`Delete the mark for ${confirmDelete?.subjectName} (${confirmDelete?.rollNumber})?`}
-        confirmLabel="Delete"
+        open={confirmClear !== null}
+        title="Clear All Marks"
+        message={`This will permanently clear all marks and the course grade for ${confirmClear?.studentName ?? ""} (${confirmClear?.rollNumber ?? ""}). The student will show as Pending.`}
+        confirmLabel="Clear All"
         destructive
-        onConfirm={deleteSingle}
-        onCancel={() => setConfirmDelete(null)}
-      />
-
-      <ConfirmDialog
-        open={confirmBulkDelete}
-        title={`Delete ${selected.size} Mark${selected.size !== 1 ? "s" : ""}`}
-        message="This will permanently delete all selected mark rows."
-        confirmLabel="Delete All"
-        destructive
-        onConfirm={bulkDelete}
-        onCancel={() => setConfirmBulkDelete(false)}
+        onConfirm={confirmAndClear}
+        onCancel={() => setConfirmClear(null)}
       />
     </div>
   );

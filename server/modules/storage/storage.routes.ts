@@ -3,7 +3,7 @@ import multer from "multer";
 import { asyncHandler, ok } from "../../lib/http";
 import { ApiError } from "../../lib/errors";
 import { requireAdmin } from "../../middleware/auth";
-import { uploadCourseImage, uploadProfilePhoto, uploadSubjectImage } from "./storage.service";
+import { uploadCourseImage, uploadFeedbackPhoto, uploadProfilePhoto, uploadSubjectImage, uploadStudentPhoto, uploadEmployeePhoto, signedPhotoUrl } from "./storage.service";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -22,6 +22,16 @@ publicUploadsRouter.post(
   })
 );
 
+publicUploadsRouter.post(
+  "/feedback-photo",
+  upload.single("photo"),
+  asyncHandler(async (req, res) => {
+    if (!req.file) throw ApiError.badRequest("No photo uploaded");
+    const path = await uploadFeedbackPhoto(req.file);
+    ok(res, { path }, 201);
+  })
+);
+
 export const adminUploadsRouter = Router();
 adminUploadsRouter.use(requireAdmin);
 
@@ -31,7 +41,8 @@ adminUploadsRouter.post(
   asyncHandler(async (req, res) => {
     if (!req.file) throw ApiError.badRequest("No image uploaded");
     const path = await uploadSubjectImage(req.file);
-    ok(res, { path }, 201);
+    const url = await signedPhotoUrl(path);
+    ok(res, { path, url }, 201);
   })
 );
 
@@ -41,6 +52,29 @@ adminUploadsRouter.post(
   asyncHandler(async (req, res) => {
     if (!req.file) throw ApiError.badRequest("No image uploaded");
     const path = await uploadCourseImage(req.file);
-    ok(res, { path }, 201);
+    const url = await signedPhotoUrl(path);
+    ok(res, { path, url }, 201);
+  })
+);
+
+adminUploadsRouter.post(
+  "/student-photo",
+  upload.single("photo"),
+  asyncHandler(async (req, res) => {
+    if (!req.file) throw ApiError.badRequest("No photo uploaded");
+    const path = await uploadStudentPhoto(req.file);
+    const url = await signedPhotoUrl(path);
+    ok(res, { path, url }, 201);
+  })
+);
+
+adminUploadsRouter.post(
+  "/employee-photo",
+  upload.single("photo"),
+  asyncHandler(async (req, res) => {
+    if (!req.file) throw ApiError.badRequest("No photo uploaded");
+    const path = await uploadEmployeePhoto(req.file);
+    const url = await signedPhotoUrl(path);
+    ok(res, { path, url }, 201);
   })
 );

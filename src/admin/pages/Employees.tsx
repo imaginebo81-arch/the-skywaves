@@ -3,7 +3,7 @@ import { Plus, Pencil, Archive, Trash2, RotateCcw, Search, Download, Upload, Fil
 import { useApi } from "../../hooks/useApi";
 import { adminApi } from "../../lib/api/admin";
 import { ApiError } from "../../lib/api/client";
-import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, StatusBadge } from "../components/ui";
+import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, StatusBadge, PhotoAvatar } from "../components/ui";
 import { downloadCsv, parseUploadedFile } from "../../lib/csv";
 
 interface Employee {
@@ -16,20 +16,18 @@ interface Employee {
   leavingDate: string | null;
   designation: string | null;
   certificateTemplateVariables: Record<string, unknown>;
+  certificateMarkdown: string | null;
+  profilePhotoPath: string | null;
+  profilePhotoUrl: string | null;
   status: string;
   deletedAt: string | null;
   archivedAt: string | null;
 }
 
-const DEFAULT_TEMPLATE_VARS = JSON.stringify({
-  place: "New Delhi",
-  work: "teaching and administrative duties",
-  duration: "",
-}, null, 2);
-
 const EMPTY = {
   employmentReferenceNumber: "", name: "", fatherName: "", dateOfBirth: "",
-  address: "", joiningDate: "", leavingDate: "", designation: "", status: "active", templateVars: DEFAULT_TEMPLATE_VARS,
+  address: "", joiningDate: "", leavingDate: "", designation: "", status: "active",
+  certificateMarkdown: "",
 };
 
 export default function Employees() {
@@ -43,6 +41,9 @@ export default function Employees() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
+  const [profilePhotoPath, setProfilePhotoPath] = useState<string | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ action: "archive" | "delete" | "restore"; emp: Employee } | null>(null);
@@ -56,6 +57,8 @@ export default function Employees() {
   const openCreate = () => {
     setEditing(null);
     setForm({ ...EMPTY });
+    setProfilePhotoPath(null);
+    setProfilePhotoPreview(null);
     setFormError(null);
     setShowForm(true);
   };
@@ -66,29 +69,41 @@ export default function Employees() {
       employmentReferenceNumber: e.employmentReferenceNumber, name: e.name, fatherName: e.fatherName ?? "",
       dateOfBirth: e.dateOfBirth, address: e.address ?? "", joiningDate: e.joiningDate ?? "",
       leavingDate: e.leavingDate ?? "", designation: e.designation ?? "", status: e.status,
-      templateVars: JSON.stringify(e.certificateTemplateVariables ?? {}, null, 2),
+      certificateMarkdown: e.certificateMarkdown ?? "",
     });
+    setProfilePhotoPath(null);
+    setProfilePhotoPreview(e.profilePhotoUrl ?? null);
     setFormError(null);
     setShowForm(true);
+  };
+
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setPhotoUploading(true);
+    try {
+      const res = await adminApi.uploadEmployeePhoto(file);
+      setProfilePhotoPath(res.path);
+      setProfilePhotoPreview(res.url ?? null);
+    } catch {
+      setFormError("Photo upload failed");
+    } finally {
+      setPhotoUploading(false);
+    }
   };
 
   const handleSave = async (ev: FormEvent) => {
     ev.preventDefault();
     setSaving(true);
     setFormError(null);
-    let templateVars: Record<string, unknown> = {};
-    try {
-      templateVars = form.templateVars.trim() ? JSON.parse(form.templateVars) : {};
-    } catch {
-      setFormError("Template variables must be valid JSON");
-      setSaving(false);
-      return;
-    }
-    const payload = {
+    const payload: Record<string, unknown> = {
       name: form.name, fatherName: form.fatherName || null, dateOfBirth: form.dateOfBirth,
       address: form.address || null, joiningDate: form.joiningDate || null, leavingDate: form.leavingDate || null,
-      designation: form.designation || null, status: form.status, certificateTemplateVariables: templateVars,
+      designation: form.designation || null, status: form.status,
+      certificateMarkdown: form.certificateMarkdown || null,
     };
+    if (profilePhotoPath) payload.profilePhotoPath = profilePhotoPath;
     try {
       if (editing) await adminApi.update("employees", editing.employmentReferenceNumber, payload);
       else await adminApi.create("employees", { employmentReferenceNumber: form.employmentReferenceNumber, ...payload });
@@ -246,6 +261,7 @@ export default function Employees() {
                 <th className="px-4 py-3 w-10">
                   <input type="checkbox" checked={selected.size === items.length && items.length > 0} onChange={toggleAll} className="cursor-pointer accent-[#eaa320]" />
                 </th>
+                <th className="px-4 py-3 w-12"></th>
                 <th className="px-4 py-3 font-semibold whitespace-nowrap">Reference No.</th>
                 <th className="px-4 py-3 font-semibold">Name</th>
                 <th className="px-4 py-3 font-semibold whitespace-nowrap">Father Name</th>
@@ -263,6 +279,9 @@ export default function Employees() {
                 <tr key={emp.employmentReferenceNumber} className={`${emp.deletedAt || emp.archivedAt ? "opacity-60" : ""} ${selected.has(emp.employmentReferenceNumber) ? "bg-orange-50" : ""}`}>
                   <td className="px-4 py-3">
                     <input type="checkbox" checked={selected.has(emp.employmentReferenceNumber)} onChange={() => toggleSelect(emp.employmentReferenceNumber)} className="cursor-pointer accent-[#eaa320]" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <PhotoAvatar src={emp.profilePhotoUrl} name={emp.name} size="sm" />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-700 whitespace-nowrap">{emp.employmentReferenceNumber}</td>
                   <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{emp.name}</td>
@@ -289,7 +308,7 @@ export default function Employees() {
                 </tr>
               ))}
               {items.length === 0 && (
-                <tr><td colSpan={11} className="px-4 py-10 text-center text-gray-400">No employees found.</td></tr>
+                <tr><td colSpan={12} className="px-4 py-10 text-center text-gray-400">No employees found.</td></tr>
               )}
             </tbody>
           </table>
@@ -317,14 +336,33 @@ export default function Employees() {
             <Field label="Address"><textarea className={inputClass} rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
           </div>
           <div className="sm:col-span-2">
-            <Field label="Certificate Template Variables (JSON)">
-              <textarea className={`${inputClass} font-mono text-xs`} rows={3} value={form.templateVars} onChange={(e) => setForm({ ...form, templateVars: e.target.value })} />
+            <Field label="Profile Photo">
+              <div className="flex items-center gap-3">
+                <input type="file" accept="image/*" className="hidden" id="emp-photo-upload" onChange={handlePhotoUpload} />
+                <label htmlFor="emp-photo-upload" className={`${inputClass} cursor-pointer text-gray-500 flex-1 py-2`}>
+                  {photoUploading ? "Uploading..." : profilePhotoPath || profilePhotoPreview ? "Change photo" : "Upload photo"}
+                </label>
+                {profilePhotoPreview && (
+                  <img src={profilePhotoPreview} alt="preview" className="w-10 h-10 rounded-full object-cover border" />
+                )}
+              </div>
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Certificate Text (Markdown)">
+              <textarea
+                className={`${inputClass} font-mono text-sm`}
+                rows={6}
+                placeholder={"This is to certify that **{{name}}** served as {{designation}} from {{joiningDate}} to {{leavingDate}}, demonstrating exceptional dedication.\n\nDuring their tenure, they contributed significantly to the organization."}
+                value={form.certificateMarkdown}
+                onChange={(e) => setForm({ ...form, certificateMarkdown: e.target.value })}
+              />
             </Field>
           </div>
           {formError && <div className="sm:col-span-2"><ErrorBanner message={formError} /></div>}
           <div className="sm:col-span-2 flex justify-end gap-3 mt-2">
             <Button variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            <Button type="submit" disabled={saving || photoUploading}>{saving ? "Saving..." : "Save"}</Button>
           </div>
         </form>
       </Modal>

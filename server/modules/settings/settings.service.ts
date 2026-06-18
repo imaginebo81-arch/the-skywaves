@@ -38,3 +38,15 @@ export async function getPassPercentage(): Promise<number> {
   if (typeof value === "number") return value;
   return value?.value ?? 35;
 }
+
+export async function getPassingGrade(): Promise<string> {
+  const value = await getSetting<string>("passing_grade", "D");
+  return typeof value === "string" ? value : "D";
+}
+
+const EMPTY_SOCIAL = { facebook: "", instagram: "", youtube: "", twitter: "", linkedin: "" };
+
+export async function getSocialLinks(): Promise<Record<string, string>> {
+  const value = await getSetting<Record<string, string>>("social_links", EMPTY_SOCIAL);
+  return { ...EMPTY_SOCIAL, ...value };
+}

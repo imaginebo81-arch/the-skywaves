@@ -2,6 +2,7 @@ export interface MarkRow {
   subjectId: string;
   subjectName: string;
   obtainedMarks: number | null;
+  grade?: string | null;
   minMarks: number;
   maxMarks: number;
   displayOrder: number;
@@ -23,13 +24,12 @@ export function computeResult(
   let totalObtained = 0;
   let totalMax = 0;
   const failedSubjects: string[] = [];
-  let hasPendingMarks = false;
+  let hasPendingMarks = marks.length === 0;
 
   for (const m of marks) {
     totalMax += m.maxMarks;
     if (m.obtainedMarks == null) {
       hasPendingMarks = true;
-      failedSubjects.push(m.subjectName);
       continue;
     }
     totalObtained += m.obtainedMarks;

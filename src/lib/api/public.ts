@@ -18,6 +18,12 @@ export const publicApi = {
     return api.post<{ path: string }>("/public/uploads/profile-photo", form);
   },
 
+  uploadFeedbackPhoto: (file: File) => {
+    const form = new FormData();
+    form.append("photo", file);
+    return api.post<{ path: string }>("/public/uploads/feedback-photo", form);
+  },
+
   createRegistration: (input: {
     name: string;
     fatherName?: string;
@@ -67,12 +73,18 @@ export const publicApi = {
     api.get<{
       courses: {
         id: string;
-        courseName: string;
-        duration: string | null;
+        subjectName: string;
         description: string | null;
         imageUrl: string | null;
-        category: string | null;
-        subjects: { id: string; subjectName: string; description: string | null; imageUrl: string | null }[];
+        duration: string | null;
+        courseId: string;
+        courseName: string;
+        isCourse: boolean;
       }[];
     }>("/public/courses/catalog"),
+
+  getSocialLinks: () =>
+    api.get<{ facebook: string; instagram: string; youtube: string; twitter: string; linkedin: string }>(
+      "/public/settings/social-links"
+    ),
 };

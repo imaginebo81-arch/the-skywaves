@@ -7,20 +7,16 @@ import { signedPhotoUrl } from "../storage/storage.service";
 
 const createSchema = z.object({
   courseName: z.string().trim().min(1).max(200),
-  duration: z.string().trim().max(100).optional().nullable(),
   status: z.enum(["active", "inactive"]).default("active"),
   description: z.string().trim().max(5000).optional().nullable(),
   imagePath: z.string().trim().max(500).optional().nullable(),
-  category: z.string().trim().max(100).optional().nullable(),
 });
 
 const updateSchema = z.object({
   courseName: z.string().trim().min(1).max(200).optional(),
-  duration: z.string().trim().max(100).optional().nullable(),
   status: z.enum(["active", "inactive"]).optional(),
   description: z.string().trim().max(5000).optional().nullable(),
   imagePath: z.string().trim().max(500).optional().nullable(),
-  category: z.string().trim().max(100).optional().nullable(),
 });
 
 export const adminCoursesRouter = buildCrudRouter({

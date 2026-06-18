@@ -9,6 +9,7 @@ import Registrations from "./pages/Registrations";
 import Students from "./pages/Students";
 import StudentMarks from "./pages/StudentMarks";
 import Employees from "./pages/Employees";
+import Enquiries from "./pages/Enquiries";
 import Feedbacks from "./pages/Feedbacks";
 import TestimonialsAdmin from "./pages/TestimonialsAdmin";
 import SettingsPage from "./pages/Settings";
@@ -36,6 +37,7 @@ function ProtectedRoutes() {
         <Route path="/admin/students" element={<Students />} />
         <Route path="/admin/marks" element={<StudentMarks />} />
         <Route path="/admin/employees" element={<Employees />} />
+        <Route path="/admin/enquiries" element={<Enquiries />} />
         <Route path="/admin/feedbacks" element={<Feedbacks />} />
         <Route path="/admin/testimonials" element={<TestimonialsAdmin />} />
         <Route path="/admin/settings" element={<SettingsPage />} />

@@ -9,7 +9,7 @@ export async function verifyStudent(rollNumber: string, dateOfBirth: string) {
   const { data, error } = await supabase
     .from("students")
     .select("roll_number")
-    .eq("roll_number", rollNumber)
+    .eq("roll_number", rollNumber.toUpperCase().trim())
     .eq("date_of_birth", dateOfBirth)
     .is("deleted_at", null)
     .maybeSingle();
@@ -35,14 +35,14 @@ function formatDate(value: string | null): string {
   if (!value) return "Present";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 }
 
 export async function verifyEmployee(referenceNumber: string, dateOfBirth: string) {
   const { data, error } = await supabase
     .from("employees")
-    .select("employment_reference_number, name, father_name, date_of_birth, address, joining_date, leaving_date, designation, certificate_template_variables")
-    .eq("employment_reference_number", referenceNumber)
+    .select("employment_reference_number, name, father_name, date_of_birth, address, joining_date, leaving_date, designation, certificate_template_variables, certificate_markdown, profile_photo_path")
+    .eq("employment_reference_number", referenceNumber.toUpperCase().trim())
     .eq("date_of_birth", dateOfBirth)
     .is("deleted_at", null)
     .maybeSingle();
@@ -65,6 +65,9 @@ export async function verifyEmployee(referenceNumber: string, dateOfBirth: strin
     ...(data.certificate_template_variables as Record<string, unknown>),
   };
 
+  const { signedPhotoUrl } = await import("../storage/storage.service");
+  const profilePhotoUrl = await signedPhotoUrl(data.profile_photo_path as string | null);
+
   return {
     employee: {
       employmentReferenceNumber: data.employment_reference_number,
@@ -76,7 +79,9 @@ export async function verifyEmployee(referenceNumber: string, dateOfBirth: strin
       leavingDate: data.leaving_date,
       designation: data.designation,
       isCurrentlyWorking: !data.leaving_date,
+      profilePhotoUrl,
     },
     certificateText: applyTemplate(template, vars),
+    certificateMarkdown: (data.certificate_markdown as string | null) ?? null,
   };
 }

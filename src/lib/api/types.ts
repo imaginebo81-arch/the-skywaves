@@ -13,6 +13,7 @@ export interface RegistrationResult {
 export interface ResultMark {
   subjectName: string;
   obtainedMarks: number | null;
+  grade: string | null;
   minMarks: number;
   maxMarks: number;
 }
@@ -38,9 +39,12 @@ export interface StudentResult {
     courseName: string | null;
     startDate: string | null;
     endDate: string | null;
+    profilePhotoUrl?: string | null;
   };
   marks: ResultMark[];
   summary: ResultSummary;
+  resultType?: "marksheet" | "gradecard" | "pending";
+  studentGrade?: string | null;
   resultToken?: string;
 }
 
@@ -55,8 +59,10 @@ export interface EmployeeVerification {
     leavingDate: string | null;
     designation: string | null;
     isCurrentlyWorking: boolean;
+    profilePhotoUrl: string | null;
   };
   certificateText: string;
+  certificateMarkdown: string | null;
 }
 
 export interface AdminProfile {

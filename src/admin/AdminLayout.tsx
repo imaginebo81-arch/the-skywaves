@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Star,
   Bell,
+  Inbox,
   type LucideIcon,
 } from "lucide-react";
 import { useAdminAuth } from "./AdminAuthContext";
@@ -36,6 +37,7 @@ const NAV: NavItem[] = [
   { to: "/admin/students", label: "Students", icon: GraduationCap },
   { to: "/admin/marks", label: "Student Marks", icon: FileSpreadsheet },
   { to: "/admin/employees", label: "Employees", icon: Users },
+  { to: "/admin/enquiries", label: "Enquiries", icon: Inbox },
   { to: "/admin/feedbacks", label: "Feedbacks", icon: MessageSquare },
   { to: "/admin/testimonials", label: "Testimonials", icon: Star },
   { to: "/admin/settings", label: "Settings", icon: SettingsIcon },

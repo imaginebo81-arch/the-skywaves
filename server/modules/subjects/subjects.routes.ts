@@ -5,6 +5,18 @@ import { requireAdmin } from "../../middleware/auth";
 import { validate } from "../../middleware/validate";
 import { parseListQuery } from "../../lib/pagination";
 import { listByCourse, subjectsCrud, toSubjectRow } from "./subjects.service";
+import { signedPhotoUrl } from "../storage/storage.service";
+
+function resolveSubjectImg(imagePath: string | null): Promise<string | null> {
+  if (!imagePath || imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return Promise.resolve(imagePath);
+  }
+  return signedPhotoUrl(imagePath);
+}
+
+async function withImageUrl<T extends { imagePath: string | null }>(item: T): Promise<T & { imageUrl: string | null }> {
+  return { ...item, imageUrl: await resolveSubjectImg(item.imagePath) };
+}
 
 const createSchema = z
   .object({
@@ -15,6 +27,7 @@ const createSchema = z
     displayOrder: z.coerce.number().int().min(0).default(0),
     description: z.string().trim().max(5000).optional().nullable(),
     imagePath: z.string().trim().max(500).optional().nullable(),
+    duration: z.string().trim().max(100).optional().nullable(),
   })
   .refine((v) => v.minMarks <= v.maxMarks, {
     message: "minMarks cannot exceed maxMarks",
@@ -28,6 +41,7 @@ const updateSchema = z.object({
   displayOrder: z.coerce.number().int().min(0).optional(),
   description: z.string().trim().max(5000).optional().nullable(),
   imagePath: z.string().trim().max(500).optional().nullable(),
+  duration: z.string().trim().max(100).optional().nullable(),
 });
 
 export const adminSubjectsRouter = Router();
@@ -39,17 +53,19 @@ adminSubjectsRouter.get(
     const courseId = typeof req.query.courseId === "string" ? req.query.courseId : null;
     const q = parseListQuery(req.query);
     if (courseId) {
-      ok(res, { items: await listByCourse(courseId, q.includeArchived) });
+      const items = await listByCourse(courseId, q.includeArchived);
+      ok(res, { items: await Promise.all(items.map(withImageUrl)) });
       return;
     }
-    ok(res, await subjectsCrud.list(q));
+    const result = await subjectsCrud.list(q);
+    ok(res, { ...result, items: await Promise.all(result.items.map(withImageUrl)) });
   })
 );
 
 adminSubjectsRouter.get(
   "/:id",
   asyncHandler(async (req, res) => {
-    ok(res, await subjectsCrud.get(req.params.id));
+    ok(res, await withImageUrl(await subjectsCrud.get(req.params.id)));
   })
 );
 

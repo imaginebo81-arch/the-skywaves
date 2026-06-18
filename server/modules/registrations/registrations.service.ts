@@ -115,6 +115,12 @@ export async function approveRegistration(
   startDate?: string | null,
   endDate?: string | null
 ) {
+  const { data: reg } = await supabase
+    .from("registrations")
+    .select("course_id")
+    .eq("id", id)
+    .maybeSingle();
+
   const { data, error } = await supabase.rpc("approve_registration", {
     p_registration_id: id,
     p_roll_number: rollNumber,
@@ -128,6 +134,12 @@ export async function approveRegistration(
     if (error.code === "P0001") throw ApiError.conflict("Registration already approved");
     throw ApiError.internal(`Approval failed: ${error.message}`);
   }
+
+  if (reg?.course_id) {
+    const { syncMarksWithCourse } = await import("../students/students.service");
+    await syncMarksWithCourse(rollNumber, reg.course_id as string).catch(() => {});
+  }
+
   return { rollNumber, student: data };
 }
 

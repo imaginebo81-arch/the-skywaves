@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { X, Loader2, AlertTriangle } from "lucide-react";
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
@@ -36,13 +36,15 @@ export function Button({
   type = "button",
   disabled,
   className = "",
+  title,
 }: {
   children: ReactNode;
   variant?: "primary" | "secondary" | "danger" | "ghost";
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   type?: "button" | "submit";
   disabled?: boolean;
   className?: string;
+  title?: string;
 }) {
   const styles: Record<string, string> = {
     primary: "bg-[#eaa320] hover:bg-[#de9b1f] text-gray-900",
@@ -55,6 +57,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2 ${styles[variant]} ${className}`}
     >
       {children}
@@ -135,6 +138,74 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 
 export const inputClass =
   "w-full rounded-lg border border-gray-300 bg-white focus:ring-[#eaa320] focus:border-[#eaa320] px-3 py-2 outline-none text-sm";
+
+export function PhotoAvatar({
+  src,
+  name,
+  size = "md",
+}: {
+  src: string | null;
+  name: string;
+  size?: "sm" | "md";
+}) {
+  const [open, setOpen] = useState(false);
+  const [broken, setBroken] = useState(false);
+
+  const sizeClass = size === "sm" ? "w-9 h-9 text-xs" : "w-11 h-11 text-sm";
+  const hasImage = !!src && !broken;
+
+  return (
+    <>
+      <div
+        className={`${sizeClass} rounded-full overflow-hidden shrink-0 border border-gray-200 ${
+          hasImage
+            ? "cursor-pointer hover:ring-2 hover:ring-[#eaa320] hover:ring-offset-1 transition-all"
+            : "bg-[#eaa320]/10"
+        }`}
+        onClick={() => hasImage && setOpen(true)}
+        title={hasImage ? "Click to view photo" : undefined}
+      >
+        {hasImage ? (
+          <img
+            src={src!}
+            alt={name}
+            className="w-full h-full object-cover"
+            onError={() => setBroken(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-[#eaa320] font-bold">
+            {name.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
+
+      {open && hasImage && (
+        <div
+          className="fixed inset-0 z-[150] bg-black/85 flex items-center justify-center p-6 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        >
+          <button
+            className="absolute top-5 right-5 text-white/70 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+            onClick={() => setOpen(false)}
+          >
+            <X size={24} />
+          </button>
+          <div
+            className="flex flex-col items-center gap-3 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={src!}
+              alt={name}
+              className="rounded-2xl max-h-[75vh] max-w-full object-contain shadow-2xl"
+            />
+            <p className="text-white/80 font-medium text-sm">{name}</p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {

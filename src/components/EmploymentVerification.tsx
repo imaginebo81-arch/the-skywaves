@@ -1,16 +1,16 @@
-import { CheckCircle, BriefcaseBusiness, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Helmet } from "react-helmet-async";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useContent } from "../context/ContentContext";
 import { useMutation } from "../hooks/useApi";
 import { publicApi } from "../lib/api/public";
 import type { EmployeeVerification as EmployeeVerificationData } from "../lib/api/types";
+import { formatDate as _fmtDate } from "../lib/dateUtils";
 
 function formatDate(value: string | null): string {
-  if (!value) return "Present";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  return _fmtDate(value, "Currently Working");
 }
 
 export default function EmploymentVerification() {
@@ -32,47 +32,77 @@ export default function EmploymentVerification() {
 
   if (data) {
     const emp = data.employee;
+    const hasMarkdown = !!data.certificateMarkdown?.trim();
     return (
-      <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full text-center flex flex-col items-center gap-8">
+      <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full flex flex-col items-center gap-8">
         <Helmet>
           <title>Employment Verified - Skywaves Educare</title>
         </Helmet>
-        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
-          <CheckCircle size={40} />
-        </div>
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Verification Successful</h2>
-          <p className="text-gray-600 text-lg">Record found. The employment details are displayed below.</p>
-        </div>
-
-        <div className="w-full max-w-2xl border border-gray-200 rounded-[24px] p-8 md:p-12 relative overflow-hidden bg-white shadow-sm mt-4 text-left">
-          <div className="absolute top-0 left-0 w-full h-4 bg-[#eaa320]"></div>
-          <div className="absolute bottom-0 left-0 w-full h-4 bg-[#eaa320]"></div>
-
-          <div className="flex flex-col items-center text-center gap-6 relative z-10 border-4 border-double border-gray-100 p-8">
-            <BriefcaseBusiness className="text-[#eaa320] w-16 h-16" />
-            <div className="space-y-4 w-full border-b border-gray-100 pb-8">
-              <h3 className="font-serif text-3xl font-bold text-gray-900 uppercase tracking-widest">Certificate of Employment</h3>
-              <p className="text-gray-500 uppercase tracking-widest text-sm">{meta.orgName} Administration</p>
-            </div>
-
-            <div className="space-y-4 pt-4 w-full text-center">
-              <h4 className="font-serif text-4xl font-bold text-gray-900">{emp.name}</h4>
-              <p className="text-gray-600 text-lg mt-4 max-w-lg mx-auto">{data.certificateText}</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full text-sm text-left mt-6 border-t border-gray-100 pt-6">
-              <Detail label="Father Name" value={emp.fatherName ?? "-"} />
-              <Detail label="Date of Birth" value={formatDate(emp.dateOfBirth)} />
-              <Detail label="Designation" value={emp.designation ?? "-"} />
-              <Detail label="Joining Date" value={formatDate(emp.joiningDate)} />
-              {!emp.isCurrentlyWorking && <Detail label="Leaving Date" value={formatDate(emp.leavingDate)} />}
-              <Detail label="Address" value={emp.address ?? "-"} />
-            </div>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+            <CheckCircle size={40} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Verification Successful</h2>
+            <p className="text-gray-600 text-lg">Record found. The employment details are displayed below.</p>
           </div>
         </div>
 
-        <button onClick={() => setData(null)} className="btn-primary px-8 py-3 font-title-md text-title-md mt-4 cursor-pointer">
+        <button onClick={() => setData(null)} className="btn-primary px-8 py-3 font-bold cursor-pointer">
+          ← Verify Another Record
+        </button>
+
+        <div className="w-full max-w-4xl rounded-2xl overflow-hidden bg-white shadow-lg text-left border border-gray-100">
+          <div className="bg-[#151b23] text-white px-10 py-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-widest text-white leading-tight">{meta.orgName}</h2>
+              <p className="text-[#eaa320] text-[11px] font-semibold uppercase tracking-[3px] mt-1">Verified Employment Record</p>
+            </div>
+            <div className="text-right">
+              <p className="text-gray-300 text-sm uppercase tracking-widest font-semibold">Certificate of Employment</p>
+            </div>
+          </div>
+          <div className="h-1.5 bg-gradient-to-r from-[#eaa320] to-[#f5c842]" />
+          <div className="flex flex-col md:flex-row min-h-[360px]">
+            <div className="md:w-[30%] bg-gray-50 px-8 py-8 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-gray-200">
+              <div className="flex justify-center">
+                {emp.profilePhotoUrl ? (
+                  <img src={emp.profilePhotoUrl} alt={emp.name} className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md" />
+                ) : (
+                  <div className="w-28 h-28 rounded-full bg-[#eaa320]/15 flex items-center justify-center text-[#eaa320] font-black text-4xl border-4 border-white shadow-md">
+                    {emp.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-3">
+                <Detail label="Name" value={emp.name} bold />
+                <Detail label="Father Name" value={emp.fatherName ?? "—"} />
+                <Detail label="Date of Birth" value={formatDate(emp.dateOfBirth)} />
+                <Detail label="Designation" value={emp.designation ?? "—"} />
+                <Detail label="Joining Date" value={formatDate(emp.joiningDate)} />
+                <Detail label="Leaving Date" value={emp.isCurrentlyWorking ? "Currently Working" : formatDate(emp.leavingDate)} />
+                {emp.address && <Detail label="Address" value={emp.address} />}
+              </div>
+            </div>
+            <div className="md:w-[70%] px-8 py-8 flex flex-col gap-5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-[2px]">Certificate Details</p>
+              {hasMarkdown ? (
+                <div className="text-[14px] text-gray-700 leading-[1.8] space-y-3 [&_h1]:text-xl [&_h1]:font-black [&_h1]:text-gray-900 [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-gray-800 [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-gray-800 [&_h3]:mb-2 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1 [&_blockquote]:border-l-4 [&_blockquote]:border-[#eaa320] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_strong]:font-bold [&_em]:italic [&_hr]:border-gray-200 [&_hr]:my-4 [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm [&_th]:border [&_th]:border-gray-200 [&_th]:px-3 [&_th]:py-2 [&_th]:bg-gray-50 [&_th]:font-semibold [&_td]:border [&_td]:border-gray-200 [&_td]:px-3 [&_td]:py-2">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.certificateMarkdown!}</ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-gray-600 text-sm leading-relaxed">{data.certificateText}</p>
+              )}
+            </div>
+          </div>
+          <div className="bg-gray-50 border-t border-gray-200 px-10 py-3.5 text-center">
+            <p className="text-gray-400 text-[10px] uppercase tracking-widest">
+              Computer-Generated Document · {meta.orgName} · Issued via Official Verification Portal
+            </p>
+          </div>
+        </div>
+
+        <button onClick={() => setData(null)} className="btn-primary px-8 py-3 font-bold cursor-pointer">
           Verify Another Record
         </button>
       </section>
@@ -127,11 +157,11 @@ export default function EmploymentVerification() {
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div className="flex flex-col">
-      <span className="text-gray-500 text-xs uppercase tracking-wide">{label}</span>
-      <span className="font-semibold text-gray-900">{value}</span>
+    <div className="flex items-start justify-between gap-3 border-b border-dashed border-gray-200 pb-2">
+      <span className="text-gray-400 text-xs uppercase tracking-wide shrink-0 mt-0.5">{label}</span>
+      <span className={`text-right ${bold ? "font-bold text-gray-900 text-sm" : "font-medium text-gray-700 text-xs"}`}>{value}</span>
     </div>
   );
 }

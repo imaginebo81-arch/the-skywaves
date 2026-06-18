@@ -5,7 +5,7 @@ import { buildListResponse, range, type ListQuery } from "../../lib/pagination";
 import { signedPhotoUrl } from "../storage/storage.service";
 
 const SELECT =
-  "roll_number, registration_id, admission_number, name, father_name, mother_name, date_of_birth, address, contact_number, course_id, profile_photo_path, start_date, end_date, status, created_at, updated_at, deleted_at, archived_at";
+  "roll_number, registration_id, admission_number, name, father_name, mother_name, date_of_birth, address, contact_number, course_id, profile_photo_path, start_date, end_date, status, grade, created_at, updated_at, deleted_at, archived_at";
 
 export function toStudentDto(row: Record<string, unknown>) {
   return {
@@ -23,6 +23,7 @@ export function toStudentDto(row: Record<string, unknown>) {
     profilePhotoPath: (row.profile_photo_path as string) ?? null,
     startDate: (row.start_date as string) ?? null,
     endDate: (row.end_date as string) ?? null,
+    grade: (row.grade as string) ?? null,
     status: row.status as string,
     createdAt: row.created_at as string,
     deletedAt: (row.deleted_at as string) ?? null,
@@ -40,8 +41,10 @@ export function toStudentRow(input: Record<string, unknown>) {
     address: "address",
     contactNumber: "contact_number",
     courseId: "course_id",
+    profilePhotoPath: "profile_photo_path",
     startDate: "start_date",
     endDate: "end_date",
+    grade: "grade",
     status: "status",
   };
   const row: Record<string, unknown> = {};
@@ -125,7 +128,7 @@ export const unarchiveStudent = (r: string, a: string) => setFlag(r, "archived_a
 export const deleteStudent = (r: string, a: string) => setFlag(r, "deleted_at", new Date().toISOString(), "delete", a);
 export const restoreStudent = (r: string, a: string) => setFlag(r, "deleted_at", null, "restore", a);
 
-async function syncMarksWithCourse(rollNumber: string, courseId: string) {
+export async function syncMarksWithCourse(rollNumber: string, courseId: string) {
   const { data: subjects } = await supabase
     .from("subjects")
     .select("id")

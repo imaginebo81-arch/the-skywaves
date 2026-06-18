@@ -2,7 +2,8 @@ import { useState } from "react";
 import { CheckCircle, XCircle, Trash2 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { adminApi } from "../../lib/api/admin";
-import { PageHeader, Spinner, ErrorBanner, Button, ConfirmDialog, StatusBadge } from "../components/ui";
+import { PageHeader, Spinner, ErrorBanner, Button, ConfirmDialog, StatusBadge, PhotoAvatar } from "../components/ui";
+import { formatDate } from "../../lib/dateUtils";
 
 interface Feedback {
   id: string;
@@ -12,6 +13,7 @@ interface Feedback {
   status: string;
   created_at: string;
   deleted_at: string | null;
+  photoUrl: string | null;
 }
 
 export default function Feedbacks() {
@@ -74,6 +76,7 @@ export default function Feedbacks() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600 text-left">
               <tr>
+                <th className="px-4 py-3 font-semibold w-12"></th>
                 <th className="px-4 py-3 font-semibold">Name</th>
                 <th className="px-4 py-3 font-semibold">Profession</th>
                 <th className="px-4 py-3 font-semibold">Review</th>
@@ -85,6 +88,9 @@ export default function Feedbacks() {
             <tbody className="divide-y divide-gray-100">
               {items.map((fb) => (
                 <tr key={fb.id}>
+                  <td className="px-4 py-3">
+                    <PhotoAvatar src={fb.photoUrl} name={fb.name} />
+                  </td>
                   <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{fb.name}</td>
                   <td className="px-4 py-3 text-gray-600">{fb.profession ?? "-"}</td>
                   <td className="px-4 py-3 text-gray-600 max-w-xs">
@@ -94,7 +100,7 @@ export default function Feedbacks() {
                     <StatusBadge status={fb.status} />
                   </td>
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
-                    {new Date(fb.created_at).toLocaleDateString()}
+                    {formatDate(fb.created_at)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
@@ -117,7 +123,7 @@ export default function Feedbacks() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
                     No {statusFilter} feedbacks.
                   </td>
                 </tr>

@@ -7,6 +7,17 @@ import { validate } from "../../middleware/validate";
 import { requireAdmin } from "../../middleware/auth";
 import { writeAudit } from "../../lib/audit";
 import { buildListResponse, parseListQuery, range } from "../../lib/pagination";
+import { signedPhotoUrl } from "../storage/storage.service";
+
+function isStoragePath(url: string | null): boolean {
+  return !!url && !url.startsWith("http://") && !url.startsWith("https://");
+}
+
+async function resolveImageUrl(url: string | null): Promise<string | null> {
+  if (!url) return null;
+  if (isStoragePath(url)) return signedPhotoUrl(url);
+  return url;
+}
 
 export const publicTestimonialsRouter = Router();
 publicTestimonialsRouter.get(
@@ -20,7 +31,10 @@ publicTestimonialsRouter.get(
       .order("display_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) throw ApiError.internal("Failed to load testimonials");
-    ok(res, { items: data ?? [] });
+    const items = await Promise.all(
+      (data ?? []).map(async (t) => ({ ...t, image_url: await resolveImageUrl(t.image_url) }))
+    );
+    ok(res, { items });
   })
 );
 
@@ -39,7 +53,10 @@ adminTestimonialsRouter.get(
     const [from, to] = range(q.page, q.pageSize);
     const { data, error, count } = await builder.order("display_order", { ascending: true }).range(from, to);
     if (error) throw ApiError.internal("Failed to load testimonials");
-    ok(res, buildListResponse(data ?? [], count, q.page, q.pageSize));
+    const items = await Promise.all(
+      (data ?? []).map(async (t) => ({ ...t, image_url: await resolveImageUrl(t.image_url) }))
+    );
+    ok(res, buildListResponse(items, count, q.page, q.pageSize));
   })
 );
 

@@ -7,7 +7,7 @@ import { validate } from "../../middleware/validate";
 import { requireAdmin } from "../../middleware/auth";
 import { writeAudit } from "../../lib/audit";
 import { buildListResponse, parseListQuery, range } from "../../lib/pagination";
-import { sendEnquiryEmail } from "../../lib/email";
+import { sendEnquiryEmail, sendUserConfirmationEmail } from "../../lib/email";
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -34,6 +34,8 @@ publicEnquiriesRouter.post(
     });
     if (error) throw ApiError.internal("Could not submit your message. Please try again.");
     sendEnquiryEmail({ name: body.name!, email: body.email, phone: body.phone, course: body.course, message: body.message, source: body.source! }).catch(console.error);
+    if (body.email) sendUserConfirmationEmail(body.email, body.name!).catch(console.error);
+    writeAudit({ actorId: "public", action: "public.enquiry_submit", entity: "enquiries", entityId: body.name, newValue: { course: body.course, source: body.source } }).catch(() => {});
     ok(res, { success: true }, 201);
   })
 );

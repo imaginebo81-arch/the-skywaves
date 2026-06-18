@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useEnroll } from "../context/EnrollContext";
-import { useCoursesCatalog } from "../hooks/useCoursesCatalog";
+import { useCoursesCatalog, type CatalogSubject } from "../hooks/useCoursesCatalog";
+import CourseModal from "../components/CourseModal";
 
 const courseGradients = [
   "bg-gradient-to-br from-orange-50 to-white",
@@ -21,19 +22,20 @@ export default function CoursesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get("category") || "All";
   const [activeCategory, setActiveCategory] = useState(initialCategory);
+  const [selected, setSelected] = useState<CatalogSubject | null>(null);
 
   useEffect(() => {
     setActiveCategory(searchParams.get("category") || "All");
   }, [searchParams]);
 
   const categories = useMemo(() => {
-    const cats = Array.from(new Set(courses.map((c) => c.category).filter(Boolean) as string[])).sort();
+    const cats = Array.from(new Set(courses.map((c) => c.courseName).filter(Boolean))).sort();
     return ["All", ...cats];
   }, [courses]);
 
   const filteredCourses = useMemo(() => {
     if (activeCategory === "All") return courses;
-    return courses.filter((c) => c.category === activeCategory);
+    return courses.filter((c) => c.courseName === activeCategory);
   }, [courses, activeCategory]);
 
   const handleCategoryChange = (cat: string) => {
@@ -74,10 +76,10 @@ export default function CoursesPage() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
             <div key={i} className="bento-card overflow-hidden rounded-2xl animate-pulse">
-              <div className="h-32 bg-gray-200" />
+              <div className="aspect-[16/10] bg-gray-200" />
               <div className="p-6 flex flex-col gap-3">
                 <div className="h-3 bg-gray-200 rounded w-1/3" />
                 <div className="h-5 bg-gray-200 rounded w-3/4" />
@@ -94,32 +96,33 @@ export default function CoursesPage() {
             : "No courses found in this category."}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course, index) => (
             <div
               key={course.id}
-              className={`bento-card overflow-hidden flex flex-col border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 rounded-2xl group ${courseGradients[index % courseGradients.length]}`}
+              onClick={() => setSelected(course)}
+              className={`bento-card overflow-hidden flex flex-col border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-[#eaa320] transition-all duration-300 rounded-2xl group cursor-pointer ${courseGradients[index % courseGradients.length]}`}
             >
-              <div className="h-32 overflow-hidden">
+              <div className="aspect-[16/10] overflow-hidden">
                 <img
                   src={course.imageUrl || PLACEHOLDER_IMG}
-                  alt={course.courseName}
-                  className="w-full h-full object-cover"
+                  alt={course.subjectName}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="p-6 flex flex-col flex-grow gap-4">
                 <div>
-                  {course.category && (
+                  {course.courseName && (
                     <span className="text-xs font-bold bg-orange-50 text-orange-700 px-2.5 py-1 rounded-full mb-3 inline-block">
-                      {course.category}
+                      {course.courseName}
                     </span>
                   )}
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{course.courseName}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{course.subjectName}</h3>
                   <p className="text-gray-600 text-sm line-clamp-3">{course.description}</p>
                 </div>
-                <div className="mt-auto pt-4 flex gap-2">
+                <div className="mt-auto pt-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={() => openEnroll(course.id)}
+                    onClick={() => openEnroll(course.isCourse ? course.courseId : course.id)}
                     className="btn-primary flex-1 py-3 text-sm cursor-pointer relative overflow-hidden flex justify-center items-center group/btn rounded-lg font-semibold"
                   >
                     <div className="absolute inset-0 w-[150%] h-full -translate-x-[150%] group-hover/btn:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 z-0" />
@@ -137,6 +140,8 @@ export default function CoursesPage() {
           ))}
         </div>
       )}
+
+      <CourseModal course={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }

@@ -29,10 +29,15 @@ router.post(
   validate(loginSchema),
   asyncHandler(async (req, res) => {
     const { username, password } = req.body as z.infer<typeof loginSchema>;
-    const { token, admin } = await login(username, password);
-    res.cookie(env.ADMIN_COOKIE_NAME, token, cookieOptions);
-    await writeAudit({ actorId: admin.id, action: "auth.login", entity: "admin_users", entityId: admin.id });
-    ok(res, { admin });
+    try {
+      const { token, admin } = await login(username, password);
+      res.cookie(env.ADMIN_COOKIE_NAME, token, cookieOptions);
+      await writeAudit({ actorId: admin.id, action: "auth.login", entity: "admin_users", entityId: admin.id });
+      ok(res, { admin });
+    } catch (err) {
+      await writeAudit({ actorId: "public", action: "auth.login_fail", entity: "admin_users", entityId: username, newValue: { username } }).catch(() => {});
+      throw err;
+    }
   })
 );
 

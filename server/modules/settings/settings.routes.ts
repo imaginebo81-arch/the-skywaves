@@ -3,7 +3,12 @@ import { z } from "zod";
 import { asyncHandler, ok } from "../../lib/http";
 import { validate } from "../../middleware/validate";
 import { requireAdmin } from "../../middleware/auth";
-import { listSettings, setSetting } from "./settings.service";
+import { listSettings, setSetting, getSocialLinks } from "./settings.service";
+
+export const publicSettingsRouter = Router();
+publicSettingsRouter.get("/social-links", asyncHandler(async (_req, res) => {
+  ok(res, await getSocialLinks());
+}));
 
 export const adminSettingsRouter = Router();
 adminSettingsRouter.use(requireAdmin);

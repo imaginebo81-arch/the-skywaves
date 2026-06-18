@@ -13,7 +13,7 @@ async function uploadToStorage(file: Express.Multer.File, folder: string): Promi
   if (!ext) throw ApiError.badRequest("Only JPEG, PNG or WebP images are allowed");
 
   const stamp = Date.now().toString(36);
-  const rand = Math.round(Number(`0.${stamp}`) * 1e9).toString(36);
+  const rand = Math.random().toString(36).slice(2, 10);
   const path = `${folder}/${stamp}-${rand}.${ext}`;
 
   const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file.buffer, {
@@ -34,6 +34,18 @@ export async function uploadSubjectImage(file: Express.Multer.File): Promise<str
 
 export async function uploadCourseImage(file: Express.Multer.File): Promise<string> {
   return uploadToStorage(file, "courses");
+}
+
+export async function uploadFeedbackPhoto(file: Express.Multer.File): Promise<string> {
+  return uploadToStorage(file, "feedbacks");
+}
+
+export async function uploadStudentPhoto(file: Express.Multer.File): Promise<string> {
+  return uploadToStorage(file, "students");
+}
+
+export async function uploadEmployeePhoto(file: Express.Multer.File): Promise<string> {
+  return uploadToStorage(file, "employees");
 }
 
 export async function signedPhotoUrl(path: string | null, expiresIn = 3600): Promise<string | null> {

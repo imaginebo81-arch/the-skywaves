@@ -9,16 +9,16 @@ export default function ContactUs() {
   const { contact } = useContent();
   const { mutate, loading, error } = useMutation(publicApi.submitEnquiry);
   const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
 
   const set = (key: keyof typeof form, value: string) => setForm((p) => ({ ...p, [key]: value }));
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      await mutate({ name: form.name, email: form.email, message: form.message, source: "contact" });
+      await mutate({ name: form.name, email: form.email, phone: form.phone || undefined, message: form.message, source: "contact" });
       setSent(true);
-      setForm({ name: "", email: "", message: "" });
+      setForm({ name: "", email: "", phone: "", message: "" });
     } catch {
       // error surfaced via hook
     }
@@ -34,10 +34,26 @@ export default function ContactUs() {
         <meta name="description" content={contact.description} />
       </Helmet>
 
-      <section className="rounded-[24px] p-6 md:p-16 text-center shadow-sm overflow-hidden relative flex flex-col justify-center min-h-[250px] md:min-h-[300px] bg-dark">
-        <div className="relative z-20">
-          <h1 className="font-display-md text-display-md text-white mb-4">{contact.heading}</h1>
-          <p className="text-white/90 font-body-lg text-body-lg max-w-2xl mx-auto">{contact.subheading}</p>
+      <section className="rounded-[24px] overflow-hidden relative flex flex-col justify-center min-h-[340px] md:min-h-[420px]">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1423666639041-f56000c27a9a?q=80&w=2000&auto=format&fit=crop"
+            alt="Contact Hero"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#151b23]/90 via-[#151b23]/75 to-[#0f2744]/80" />
+        </div>
+        <div className="relative z-10 text-center px-6 py-16 md:py-20">
+          <span className="inline-block text-xs font-bold text-[#eaa320] uppercase tracking-[3px] mb-4">Get In Touch</span>
+          <h1 className="text-5xl md:text-7xl font-black text-white mb-5 leading-tight tracking-tight">
+            {contact.heading}
+          </h1>
+          <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">{contact.subheading}</p>
+          <div className="mt-8 flex items-center justify-center gap-2">
+            <div className="w-12 h-1 bg-[#eaa320] rounded-full" />
+            <div className="w-3 h-3 rounded-full bg-[#eaa320]" />
+            <div className="w-12 h-1 bg-[#eaa320] rounded-full" />
+          </div>
         </div>
       </section>
 
@@ -85,17 +101,21 @@ export default function ContactUs() {
             <form className="flex flex-col gap-4 mt-auto" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm font-label-sm text-on-surface-variant">Name</label>
-                  <input required className={inputClass} value={form.name} onChange={(e) => set("name", e.target.value)} type="text" />
+                  <label className="text-sm font-label-sm text-on-surface-variant">Name <span className="text-red-500">*</span></label>
+                  <input required className={inputClass} value={form.name} onChange={(e) => set("name", e.target.value)} type="text" placeholder="Your full name" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm font-label-sm text-on-surface-variant">Email</label>
-                  <input required className={inputClass} value={form.email} onChange={(e) => set("email", e.target.value)} type="email" />
+                  <label className="text-sm font-label-sm text-on-surface-variant">Email <span className="text-red-500">*</span></label>
+                  <input required className={inputClass} value={form.email} onChange={(e) => set("email", e.target.value)} type="email" placeholder="your@email.com" />
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-label-sm text-on-surface-variant">Message</label>
-                <textarea required className={`${inputClass} h-32 resize-none`} value={form.message} onChange={(e) => set("message", e.target.value)} />
+                <label className="text-sm font-label-sm text-on-surface-variant">Phone Number</label>
+                <input className={inputClass} value={form.phone} onChange={(e) => set("phone", e.target.value)} type="tel" placeholder="+91 98765 43210" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-label-sm text-on-surface-variant">Message <span className="text-red-500">*</span></label>
+                <textarea required className={`${inputClass} h-32 resize-none`} value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Tell us about your enquiry or the course you're interested in..." />
               </div>
               {error && <p className="text-red-600 text-sm">{error}</p>}
               <button disabled={loading} className="btn-primary py-4 font-title-md text-title-md w-full mt-2 cursor-pointer disabled:opacity-60" type="submit">

@@ -1,4 +1,5 @@
 import { createCrud } from "../../lib/crud";
+import { signedPhotoUrl } from "../storage/storage.service";
 
 export interface EmployeeDto {
   employmentReferenceNumber: string;
@@ -10,6 +11,8 @@ export interface EmployeeDto {
   leavingDate: string | null;
   designation: string | null;
   certificateTemplateVariables: Record<string, unknown>;
+  certificateMarkdown: string | null;
+  profilePhotoPath: string | null;
   status: string;
   createdAt: string;
   deletedAt: string | null;
@@ -17,7 +20,7 @@ export interface EmployeeDto {
 }
 
 const SELECT =
-  "employment_reference_number, name, father_name, date_of_birth, address, joining_date, leaving_date, designation, certificate_template_variables, status, created_at, updated_at, deleted_at, archived_at";
+  "employment_reference_number, name, father_name, date_of_birth, address, joining_date, leaving_date, designation, certificate_template_variables, certificate_markdown, profile_photo_path, status, created_at, updated_at, deleted_at, archived_at";
 
 function toDto(row: Record<string, unknown>): EmployeeDto {
   return {
@@ -30,6 +33,8 @@ function toDto(row: Record<string, unknown>): EmployeeDto {
     leavingDate: (row.leaving_date as string) ?? null,
     designation: (row.designation as string) ?? null,
     certificateTemplateVariables: (row.certificate_template_variables as Record<string, unknown>) ?? {},
+    certificateMarkdown: (row.certificate_markdown as string) ?? null,
+    profilePhotoPath: (row.profile_photo_path as string) ?? null,
     status: row.status as string,
     createdAt: row.created_at as string,
     deletedAt: (row.deleted_at as string) ?? null,
@@ -46,6 +51,10 @@ export const employeesCrud = createCrud<EmployeeDto>({
   toDto,
 });
 
+export async function signEmployeePhoto(dto: EmployeeDto) {
+  return { ...dto, profilePhotoUrl: await signedPhotoUrl(dto.profilePhotoPath) };
+}
+
 export function toEmployeeRow(input: Record<string, unknown>) {
   const map: Record<string, string> = {
     employmentReferenceNumber: "employment_reference_number",
@@ -57,6 +66,8 @@ export function toEmployeeRow(input: Record<string, unknown>) {
     leavingDate: "leaving_date",
     designation: "designation",
     certificateTemplateVariables: "certificate_template_variables",
+    certificateMarkdown: "certificate_markdown",
+    profilePhotoPath: "profile_photo_path",
     status: "status",
   };
   const row: Record<string, unknown> = {};
