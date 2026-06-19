@@ -37,11 +37,6 @@ interface EditState {
   rows: { markId: string; subjectName: string; obtainedMarks: number | null; minMarks: number; maxMarks: number }[];
 }
 
-const RESULT_BADGE: Record<string, { label: string; cls: string }> = {
-  marksheet: { label: "Marksheet", cls: "bg-blue-100 text-blue-700" },
-  gradecard: { label: "Grade Card", cls: "bg-purple-100 text-purple-700" },
-  pending: { label: "Pending", cls: "bg-amber-100 text-amber-700" },
-};
 
 export default function StudentMarks() {
   const [q, setQ] = useState("");
@@ -165,8 +160,16 @@ export default function StudentMarks() {
   };
 
   const openPreview = async (rollNumber: string) => {
-    const { token } = await adminApi.getResultToken(rollNumber);
-    window.open(`/verification/result/${encodeURIComponent(rollNumber)}?token=${token}`, "_blank");
+    // Open window synchronously (before await) so browsers don't treat it as a popup
+    const win = window.open("", "_blank");
+    try {
+      const { token } = await adminApi.getResultToken(rollNumber);
+      const url = `/verification/result/${encodeURIComponent(rollNumber)}?token=${token}`;
+      if (win) win.location.href = url;
+      else window.open(url, "_blank");
+    } catch {
+      if (win) win.close();
+    }
   };
 
   const confirmAndClear = async () => {
@@ -256,13 +259,6 @@ export default function StudentMarks() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {items.map((s) => {
-                const badge = RESULT_BADGE[s.resultType];
-                const statusCls = s.resultType === "pending"
-                  ? "bg-amber-100 text-amber-700"
-                  : s.passed
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700";
-                const statusLabel = s.resultType === "pending" ? "Pending" : s.passed ? "Pass" : "Fail";
                 return (
                   <tr key={s.rollNumber} className="hover:bg-gray-50/50">
                     <td className="px-4 py-3 font-mono text-xs text-gray-700 whitespace-nowrap">{s.rollNumber}</td>
@@ -286,9 +282,17 @@ export default function StudentMarks() {
                       {s.resultType === "marksheet" ? `${s.percentage}%` : "—"}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusCls}`}>{statusLabel}</span>
-                      {s.resultType !== "pending" && (
-                        <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-medium ${badge.cls}`}>{badge.label}</span>
+                      {s.resultType === "pending" ? (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
+                      ) : s.resultType === "gradecard" ? (
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">Grade Card</span>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${s.passed ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                            {s.passed ? "Pass" : "Fail"}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Marksheet</span>
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3">

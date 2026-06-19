@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { CheckCircle, Award, Loader2, ExternalLink } from "lucide-react";
+import { useState, useRef, type FormEvent } from "react";
+import { CheckCircle, Award, Loader2, ExternalLink, Calendar } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { useContent } from "../context/ContentContext";
 import { useMutation } from "../hooks/useApi";
@@ -14,12 +14,23 @@ export default function StudentVerification() {
   const { mutate, loading, error } = useMutation(publicApi.verifyStudent);
   const [result, setResult] = useState<StudentResult | null>(null);
   const [rollNumber, setRollNumber] = useState("");
-  const [dob, setDob] = useState("");
+  const [dob, setDob] = useState(""); // stored as DD/MM/YYYY
+  const dobPickerRef = useRef<HTMLInputElement>(null);
+
+  function handleDobInput(val: string) {
+    const digits = val.replace(/\D/g, "").slice(0, 8);
+    let out = digits.slice(0, 2);
+    if (digits.length > 2) out += "/" + digits.slice(2, 4);
+    if (digits.length > 4) out += "/" + digits.slice(4, 8);
+    setDob(out);
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const res = await mutate(rollNumber.trim(), dob);
+      const [dd, mm, yyyy] = dob.split("/");
+      const isoDate = `${yyyy}-${(mm ?? "").padStart(2, "0")}-${(dd ?? "").padStart(2, "0")}`;
+      const res = await mutate(rollNumber.trim(), isoDate);
       setResult(res);
     } catch {
       // error surfaced via hook
@@ -73,13 +84,33 @@ export default function StudentVerification() {
       <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-2">
           <label className="text-sm font-label-sm text-on-surface-variant font-medium">Date of Birth</label>
-          <input
-            required
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest focus:ring-[#eaa320] focus:border-[#eaa320] p-4 outline-none text-lg"
-            type="date"
-          />
+          <div className="relative flex items-center">
+            <input
+              required
+              value={dob}
+              onChange={(e) => handleDobInput(e.target.value)}
+              placeholder="DD/MM/YYYY"
+              pattern="\d{2}/\d{2}/\d{4}"
+              inputMode="numeric"
+              className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest focus:ring-[#eaa320] focus:border-[#eaa320] p-4 pr-12 outline-none text-lg"
+              type="text"
+            />
+            <label className="absolute right-4 cursor-pointer text-gray-400 hover:text-[#eaa320] transition-colors flex items-center">
+              <Calendar size={22} />
+              <input
+                ref={dobPickerRef}
+                type="date"
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                tabIndex={-1}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const [y, m, d] = e.target.value.split("-");
+                    setDob(`${d}/${m}/${y}`);
+                  }
+                }}
+              />
+            </label>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2">
