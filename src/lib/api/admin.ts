@@ -45,13 +45,13 @@ export const adminApi = {
 
   // Marks
   getStudentMarks: <T>(rollNumber: string) =>
-    api.get<T>(`/admin/students/${rollNumber}/marks`),
+    api.get<T>(`/admin/students/${encodeURIComponent(rollNumber)}/marks`),
   saveStudentMarks: <T>(rollNumber: string, marks: { subjectId: string; obtainedMarks: number | null }[]) =>
-    api.put<T>(`/admin/students/${rollNumber}/marks`, { marks }),
+    api.put<T>(`/admin/students/${encodeURIComponent(rollNumber)}/marks`, { marks }),
   getStudentResult: <T>(rollNumber: string) =>
-    api.get<T>(`/admin/students/${rollNumber}/result`),
+    api.get<T>(`/admin/students/${encodeURIComponent(rollNumber)}/result`),
   getResultToken: (rollNumber: string) =>
-    api.get<{ token: string }>(`/admin/students/${rollNumber}/result-token`),
+    api.get<{ token: string }>(`/admin/students/${encodeURIComponent(rollNumber)}/result-token`),
 
   // Marks (student-based admin list)
   listAllMarks: (params?: ListParams) =>
@@ -63,7 +63,7 @@ export const adminApi = {
       marks: Array<{ markId: string; subjectId: string; subjectName: string; obtainedMarks: number | null; subjectGrade: string | null; minMarks: number; maxMarks: number }>;
     }>>("/admin/marks", params),
   deleteMark: (markId: string) => api.del(`/admin/marks/${markId}`),
-  clearStudentMarks: (rollNumber: string) => api.del(`/admin/marks/student/${rollNumber}`),
+  clearStudentMarks: (rollNumber: string) => api.del(`/admin/marks/student/${encodeURIComponent(rollNumber)}`),
   setStudentGrade: (rollNumber: string, grade: string | null) =>
     api.post<{ success: boolean }>("/admin/marks/set-grade", { rollNumber, grade }),
   bulkUpdateMarks: (entries: { rollNumber: string; subjectName?: string | null; obtainedMarks?: number | null; grade?: string | null; courseGrade?: string | null }[]) =>

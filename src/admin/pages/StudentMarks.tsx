@@ -50,6 +50,7 @@ export default function StudentMarks() {
 
   const { data: coursesData } = useApi(() => adminApi.list<{ id: string; courseName: string }>("courses", { pageSize: 100 }), []);
 
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState<StudentEntry | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
@@ -160,15 +161,23 @@ export default function StudentMarks() {
   };
 
   const openPreview = async (rollNumber: string) => {
-    // Open window synchronously (before await) so browsers don't treat it as a popup
+    setPreviewError(null);
+    // Open blank tab synchronously (inside user-gesture handler) so popup blockers allow it.
+    // Then redirect to the result URL once we have a signed token.
     const win = window.open("", "_blank");
     try {
       const { token } = await adminApi.getResultToken(rollNumber);
-      const url = `/verification/result/${encodeURIComponent(rollNumber)}?token=${token}`;
-      if (win) win.location.href = url;
-      else window.open(url, "_blank");
-    } catch {
+      // Use absolute URL so about:blank has a valid base for the navigation
+      const url = `${window.location.origin}/verification/result/${encodeURIComponent(rollNumber)}?token=${token}`;
+      if (win) {
+        win.location.href = url;
+      } else {
+        // Popup was blocked — fall back to same-tab navigation
+        window.location.href = url;
+      }
+    } catch (err) {
       if (win) win.close();
+      setPreviewError(err instanceof Error ? err.message : "Failed to open result");
     }
   };
 
@@ -216,6 +225,8 @@ export default function StudentMarks() {
         subtitle="All enrolled students · marks, grades and results"
         actions={<Button onClick={() => setNewForm({ rollNumber: "", courseGrade: "", subjectName: "", obtainedMarks: "" })}><Plus size={16} /> New Entry</Button>}
       />
+
+      {previewError && <div className="mb-4"><ErrorBanner message={previewError} /></div>}
 
       <div className="flex flex-wrap gap-3 mb-4">
         <form onSubmit={(e) => { e.preventDefault(); setQ(searchInput); }} className="relative">
