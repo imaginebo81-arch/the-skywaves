@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useEnroll } from "../context/EnrollContext";
-import { useCoursesCatalog, type CatalogSubject } from "../hooks/useCoursesCatalog";
+import { useCoursesCatalog, type CatalogCourse } from "../hooks/useCoursesCatalog";
 import CourseModal from "../components/CourseModal";
 
 const courseGradients = [
@@ -22,20 +22,20 @@ export default function CoursesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get("category") || "All";
   const [activeCategory, setActiveCategory] = useState(initialCategory);
-  const [selected, setSelected] = useState<CatalogSubject | null>(null);
+  const [selected, setSelected] = useState<CatalogCourse | null>(null);
 
   useEffect(() => {
     setActiveCategory(searchParams.get("category") || "All");
   }, [searchParams]);
 
   const categories = useMemo(() => {
-    const cats = Array.from(new Set(courses.map((c) => c.courseName).filter(Boolean))).sort();
+    const cats = Array.from(new Set(courses.map((c) => c.groupName).filter(Boolean))).sort();
     return ["All", ...cats];
   }, [courses]);
 
   const filteredCourses = useMemo(() => {
     if (activeCategory === "All") return courses;
-    return courses.filter((c) => c.courseName === activeCategory);
+    return courses.filter((c) => c.groupName.toLowerCase() === activeCategory.toLowerCase());
   }, [courses, activeCategory]);
 
   const handleCategoryChange = (cat: string) => {
@@ -106,23 +106,23 @@ export default function CoursesPage() {
               <div className="aspect-[16/10] overflow-hidden">
                 <img
                   src={course.imageUrl || PLACEHOLDER_IMG}
-                  alt={course.subjectName}
+                  alt={course.courseName}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="p-6 flex flex-col flex-grow gap-4">
                 <div>
-                  {course.courseName && (
+                  {course.groupName && (
                     <span className="text-xs font-bold bg-orange-50 text-orange-700 px-2.5 py-1 rounded-full mb-3 inline-block">
-                      {course.courseName}
+                      {course.groupName}
                     </span>
                   )}
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{course.subjectName}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{course.courseName}</h3>
                   <p className="text-gray-600 text-sm line-clamp-3">{course.description}</p>
                 </div>
                 <div className="mt-auto pt-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={() => openEnroll(course.isCourse ? course.courseId : course.id)}
+                    onClick={() => openEnroll(course.id)}
                     className="btn-primary flex-1 py-3 text-sm cursor-pointer relative overflow-hidden flex justify-center items-center group/btn rounded-lg font-semibold"
                   >
                     <div className="absolute inset-0 w-[150%] h-full -translate-x-[150%] group-hover/btn:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 z-0" />

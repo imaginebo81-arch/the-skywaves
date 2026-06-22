@@ -78,15 +78,15 @@ export default function FashionPage() {
             {allSubjects.map((subject, index) => (
               <div key={subject.id} className={`bento-card overflow-hidden flex flex-col border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 rounded-2xl group ${courseGradients[index % courseGradients.length]}`}>
                 <div className="h-48 overflow-hidden relative">
-                  <img src={subject.imageUrl || PLACEHOLDER_IMG} alt={subject.subjectName} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <img src={subject.imageUrl || PLACEHOLDER_IMG} alt={subject.courseName} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
                 <div className="p-6 flex flex-col flex-grow gap-4 bg-white/60 backdrop-blur-sm">
                   <div>
                     <span className="text-xs font-bold bg-orange-50 text-orange-700 px-3 py-1.5 rounded-full mb-4 inline-block shadow-sm">
-                      {subject.courseName}
+                      {subject.groupName}
                     </span>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">{subject.subjectName}</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">{subject.courseName}</h3>
                     <p className="text-gray-600 text-sm leading-relaxed">{subject.description}</p>
                   </div>
                   <div className="mt-auto pt-4 flex gap-2">

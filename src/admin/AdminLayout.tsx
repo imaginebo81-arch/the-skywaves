@@ -3,6 +3,7 @@ import { NavLink, useNavigate, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   BookOpen,
+  Layers,
   ListChecks,
   ClipboardList,
   GraduationCap,
@@ -31,6 +32,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/admin/course-groups", label: "Course Groups", icon: Layers },
   { to: "/admin/courses", label: "Courses", icon: BookOpen },
   { to: "/admin/subjects", label: "Subjects", icon: ListChecks },
   { to: "/admin/registrations", label: "Registrations", icon: ClipboardList },
@@ -115,7 +117,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {mobileOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={() => setMobileOpen(false)} />}
 
       <aside
-        className={`fixed lg:sticky top-0 z-40 h-screen w-64 bg-dark text-white flex flex-col transition-transform duration-200 ${
+        className={`fixed lg:sticky top-0 z-40 h-screen w-72 bg-dark text-white flex flex-col transition-transform duration-200 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >

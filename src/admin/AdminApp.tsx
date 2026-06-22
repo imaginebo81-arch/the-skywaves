@@ -4,6 +4,7 @@ import AdminLayout from "./AdminLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
+import CourseGroups from "./pages/CourseGroups";
 import Subjects from "./pages/Subjects";
 import Registrations from "./pages/Registrations";
 import Students from "./pages/Students";
@@ -32,6 +33,7 @@ function ProtectedRoutes() {
       <Routes>
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/courses" element={<Courses />} />
+        <Route path="/admin/course-groups" element={<CourseGroups />} />
         <Route path="/admin/subjects" element={<Subjects />} />
         <Route path="/admin/registrations" element={<Registrations />} />
         <Route path="/admin/students" element={<Students />} />

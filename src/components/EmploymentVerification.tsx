@@ -1,5 +1,6 @@
 import { CheckCircle, Loader2, Calendar } from "lucide-react";
-import { useState, useRef, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
+import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -20,7 +21,11 @@ export default function EmploymentVerification() {
   const [data, setData] = useState<EmployeeVerificationData | null>(null);
   const [ref, setRef] = useState("");
   const [dob, setDob] = useState(""); // stored as DD/MM/YYYY
-  const dobPickerRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    setData(null);
+  }, [location.key]);
 
   function handleDobInput(val: string) {
     const digits = val.replace(/\D/g, "").slice(0, 8);
@@ -45,47 +50,51 @@ export default function EmploymentVerification() {
     const emp = data.employee;
     const hasMarkdown = !!data.certificateMarkdown?.trim();
     return (
-      <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-4xl mx-auto w-full flex flex-col items-center gap-8">
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8 max-w-4xl mx-auto w-full flex flex-col items-center gap-6">
         <Helmet>
           <title>Employment Verified - Skywaves Educare</title>
         </Helmet>
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-            <CheckCircle size={40} />
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+            <CheckCircle size={32} />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Verification Successful</h2>
-            <p className="text-gray-600 text-lg">Record found. The employment details are displayed below.</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Verification Successful</h2>
+            <p className="text-gray-500 text-sm md:text-base">Record found. The employment details are displayed below.</p>
           </div>
         </div>
 
-        <button onClick={() => setData(null)} className="btn-primary px-8 py-3 font-bold cursor-pointer">
+        <button onClick={() => setData(null)} className="btn-primary px-6 py-2.5 font-bold cursor-pointer text-sm">
           ← Verify Another Record
         </button>
 
-        <div className="w-full max-w-4xl rounded-2xl overflow-hidden bg-white shadow-lg text-left border border-gray-100">
-          <div className="bg-[#151b23] text-white px-10 py-6 flex items-center justify-between">
+        <div className="w-full rounded-2xl overflow-hidden bg-white shadow-md text-left border border-gray-100">
+          {/* Certificate header */}
+          <div className="bg-[#151b23] text-white px-4 py-4 sm:px-8 sm:py-5 flex flex-wrap items-start sm:items-center gap-2 justify-between">
             <div>
-              <h2 className="text-2xl font-black uppercase tracking-widest text-white leading-tight">{meta.orgName}</h2>
-              <p className="text-[#eaa320] text-[11px] font-semibold uppercase tracking-[3px] mt-1">Verified Employment Record</p>
+              <h2 className="text-base sm:text-xl font-black uppercase tracking-wide text-white leading-tight">{meta.orgName}</h2>
+              <p className="text-[#eaa320] text-[10px] font-semibold uppercase tracking-[2px] mt-0.5">Verified Employment Record</p>
             </div>
             <div className="text-right">
-              <p className="text-gray-300 text-sm uppercase tracking-widest font-semibold">Certificate of Employment</p>
+              <p className="text-gray-300 text-xs font-semibold uppercase tracking-wide">Certificate of Employment</p>
             </div>
           </div>
-          <div className="h-1.5 bg-gradient-to-r from-[#eaa320] to-[#f5c842]" />
-          <div className="flex flex-col md:flex-row min-h-[360px]">
-            <div className="md:w-[30%] bg-gray-50 px-8 py-8 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-gray-200">
+          <div className="h-1 bg-gradient-to-r from-[#eaa320] to-[#f5c842]" />
+
+          {/* Body */}
+          <div className="flex flex-col md:flex-row">
+            {/* Left panel */}
+            <div className="md:w-[35%] bg-gray-50 px-4 py-5 sm:px-6 sm:py-6 flex flex-col gap-5 border-b md:border-b-0 md:border-r border-gray-200">
               <div className="flex justify-center">
                 {emp.profilePhotoUrl ? (
-                  <img src={emp.profilePhotoUrl} alt={emp.name} className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md" />
+                  <img src={emp.profilePhotoUrl} alt={emp.name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
                 ) : (
-                  <div className="w-28 h-28 rounded-full bg-[#eaa320]/15 flex items-center justify-center text-[#eaa320] font-black text-4xl border-4 border-white shadow-md">
+                  <div className="w-24 h-24 rounded-full bg-[#eaa320]/15 flex items-center justify-center text-[#eaa320] font-black text-3xl border-4 border-white shadow-md">
                     {emp.name.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5">
                 <Detail label="Name" value={emp.name} bold />
                 <Detail label="Father Name" value={emp.fatherName ?? "—"} />
                 <Detail label="Date of Birth" value={formatDate(emp.dateOfBirth)} />
@@ -95,10 +104,12 @@ export default function EmploymentVerification() {
                 {emp.address && <Detail label="Address" value={emp.address} />}
               </div>
             </div>
-            <div className="md:w-[70%] px-8 py-8 flex flex-col gap-5">
+
+            {/* Right panel */}
+            <div className="md:w-[65%] px-4 py-5 sm:px-6 sm:py-6 flex flex-col gap-4">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-[2px]">Certificate Details</p>
               {hasMarkdown ? (
-                <div className="text-[14px] text-gray-700 leading-[1.8] space-y-3 [&_h1]:text-xl [&_h1]:font-black [&_h1]:text-gray-900 [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-gray-800 [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:text-gray-800 [&_h3]:mb-2 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1 [&_blockquote]:border-l-4 [&_blockquote]:border-[#eaa320] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_strong]:font-bold [&_em]:italic [&_hr]:border-gray-200 [&_hr]:my-4 [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm [&_th]:border [&_th]:border-gray-200 [&_th]:px-3 [&_th]:py-2 [&_th]:bg-gray-50 [&_th]:font-semibold [&_td]:border [&_td]:border-gray-200 [&_td]:px-3 [&_td]:py-2">
+                <div className="text-sm text-gray-700 leading-relaxed space-y-3 [&_h1]:text-lg [&_h1]:font-black [&_h1]:text-gray-900 [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-gray-800 [&_h2]:mb-1.5 [&_h3]:font-semibold [&_h3]:text-gray-800 [&_h3]:mb-1 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_blockquote]:border-l-4 [&_blockquote]:border-[#eaa320] [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_strong]:font-bold [&_hr]:border-gray-200 [&_hr]:my-3 [&_table]:w-full [&_table]:border-collapse [&_table]:text-xs [&_th]:border [&_th]:border-gray-200 [&_th]:px-2 [&_th]:py-1.5 [&_th]:bg-gray-50 [&_th]:font-semibold [&_td]:border [&_td]:border-gray-200 [&_td]:px-2 [&_td]:py-1.5">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.certificateMarkdown!}</ReactMarkdown>
                 </div>
               ) : (
@@ -106,14 +117,16 @@ export default function EmploymentVerification() {
               )}
             </div>
           </div>
-          <div className="bg-gray-50 border-t border-gray-200 px-10 py-3.5 text-center">
+
+          {/* Footer */}
+          <div className="bg-gray-50 border-t border-gray-200 px-4 sm:px-8 py-3 text-center">
             <p className="text-gray-400 text-[10px] uppercase tracking-widest">
               Computer-Generated Document · {meta.orgName} · Issued via Official Verification Portal
             </p>
           </div>
         </div>
 
-        <button onClick={() => setData(null)} className="btn-primary px-8 py-3 font-bold cursor-pointer">
+        <button onClick={() => setData(null)} className="btn-primary px-6 py-2.5 font-bold cursor-pointer text-sm">
           Verify Another Record
         </button>
       </section>
@@ -121,19 +134,19 @@ export default function EmploymentVerification() {
   }
 
   return (
-    <section className="bento-card p-6 md:p-12 bg-surface-container-lowest max-w-3xl mx-auto w-full">
+    <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-10 max-w-lg mx-auto w-full">
       <Helmet>
         <title>Employment Verification - Skywaves Educare</title>
         <meta name="description" content="Verify the employment records of Skywaves Educare faculty and staff efficiently." />
       </Helmet>
-      <div className="mb-8 border-b border-outline-variant pb-6 text-center md:text-left">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">{cfg.heading}</h2>
-        <p className="text-gray-600 text-lg">{cfg.description}</p>
+      <div className="mb-6 border-b border-gray-200 pb-5 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{cfg.heading}</h2>
+        <p className="text-gray-500 text-sm md:text-base">{cfg.description}</p>
       </div>
 
-      <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-label-sm text-on-surface-variant font-medium">Date of Birth</label>
+      <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-gray-600">Date of Birth</label>
           <div className="relative flex items-center">
             <input
               required
@@ -142,15 +155,16 @@ export default function EmploymentVerification() {
               placeholder="DD/MM/YYYY"
               pattern="\d{2}/\d{2}/\d{4}"
               inputMode="numeric"
-              className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest focus:ring-[#eaa320] focus:border-[#eaa320] p-4 pr-12 outline-none text-lg"
+              className="w-full rounded-xl border border-gray-300 bg-white focus:border-[#eaa320] focus:outline-none focus:ring-2 focus:ring-[#eaa320]/20 p-4 pr-12 text-base"
               type="text"
             />
-            <label className="absolute right-4 cursor-pointer text-gray-400 hover:text-[#eaa320] transition-colors flex items-center">
-              <Calendar size={22} />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 group">
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center z-10 text-gray-400 group-hover:text-[#eaa320] transition-colors">
+                <Calendar size={20} />
+              </span>
               <input
-                ref={dobPickerRef}
                 type="date"
-                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 tabIndex={-1}
                 onChange={(e) => {
                   if (e.target.value) {
@@ -159,30 +173,28 @@ export default function EmploymentVerification() {
                   }
                 }}
               />
-            </label>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-label-sm text-on-surface-variant font-medium">{cfg.refLabel}</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-gray-600">{cfg.refLabel}</label>
           <input
             required
             value={ref}
             onChange={(e) => setRef(e.target.value)}
-            className="w-full rounded-[10px] border border-outline-variant bg-surface-container-lowest focus:ring-[#eaa320] focus:border-[#eaa320] p-4 outline-none text-lg tracking-wider"
+            className="w-full rounded-xl border border-gray-300 bg-white focus:border-[#eaa320] focus:outline-none focus:ring-2 focus:ring-[#eaa320]/20 p-4 text-base tracking-wider"
             placeholder={cfg.refPlaceholder}
             type="text"
           />
         </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
 
-        <div className="mt-8">
-          <button type="submit" disabled={loading} className="btn-primary w-full py-4 text-xl font-bold cursor-pointer transition-transform active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60">
-            {loading && <Loader2 size={20} className="animate-spin" />}
-            {loading ? "Verifying..." : "Verify Employment"}
-          </button>
-        </div>
+        <button type="submit" disabled={loading} className="btn-primary w-full py-4 text-base font-bold cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 rounded-xl">
+          {loading && <Loader2 size={18} className="animate-spin" />}
+          {loading ? "Verifying..." : "Verify Employment"}
+        </button>
       </form>
     </section>
   );

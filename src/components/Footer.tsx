@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useContent } from "../context/ContentContext";
 import { publicApi } from "../lib/api/public";
+import { useCourseGroups } from "../hooks/useCourseGroups";
 
 const SOCIAL_ICONS = [
   { key: "facebook", Icon: Facebook },
@@ -14,15 +15,20 @@ const SOCIAL_ICONS = [
 
 export default function Footer() {
   const { meta, footer } = useContent();
+  const { groups } = useCourseGroups();
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
 
   useEffect(() => {
     publicApi.getSocialLinks().then(setSocialLinks).catch(() => {});
   }, []);
 
+  const courseLinks = groups.length > 0
+    ? groups.map((g) => ({ label: g.name, to: `/courses?category=${encodeURIComponent(g.name)}` }))
+    : footer.courseLinks;
+
   return (
     <footer className="bg-dark text-white w-full border-t border-white/10">
-      <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 py-16 flex flex-col gap-12">
+      <div className="w-full px-4 md:px-12 py-16 flex flex-col gap-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 items-start">
           <div className="flex flex-col gap-6 md:col-span-2 max-w-sm">
             <img alt={meta.orgName} className="h-[49px] object-contain object-left" src={meta.logoUrl} />
@@ -47,7 +53,7 @@ export default function Footer() {
 
           <div className="flex flex-col gap-4">
             <h3 className="font-semibold text-white mb-2 text-lg">Courses</h3>
-            {footer.courseLinks.map((link) => (
+            {courseLinks.map((link) => (
               <Link key={link.to} to={link.to} className="text-gray-300 hover:text-[#eaa320] transition-colors text-sm font-medium">
                 {link.label}
               </Link>
@@ -56,7 +62,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="w-full max-w-[1400px] mx-auto px-4 md:px-12 py-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="w-full px-4 md:px-12 py-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="text-gray-400 text-sm">{footer.copyright}</p>
         <nav className="flex flex-wrap justify-center gap-6">
           {footer.bottomLinks.map((link) => (

@@ -1,5 +1,5 @@
-import { useState, useRef, type FormEvent, type ChangeEvent } from "react";
-import { Plus, Pencil, Trash2, Archive, RotateCcw, Download, Upload, FileSpreadsheet } from "lucide-react";
+import { useEffect, useState, useRef, type FormEvent, type ChangeEvent } from "react";
+import { Plus, Pencil, Trash2, Archive, RotateCcw, Download, Upload, FileSpreadsheet, Check, EyeOff } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { adminApi } from "../../lib/api/admin";
 import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, StatusBadge } from "../components/ui";
@@ -11,8 +11,15 @@ interface Course {
   status: string;
   description: string | null;
   imagePath: string | null;
+  courseGroupId: string | null;
+  frontendVisible: boolean;
   deletedAt: string | null;
   archivedAt: string | null;
+}
+
+interface CourseGroupOption {
+  id: string;
+  name: string;
 }
 
 export default function Courses() {
@@ -22,9 +29,18 @@ export default function Courses() {
     [includeArchived]
   );
 
+  const [groups, setGroups] = useState<CourseGroupOption[]>([]);
+  const groupName = (id: string | null) => groups.find((g) => g.id === id)?.name ?? "—";
+
+  useEffect(() => {
+    adminApi.list<CourseGroupOption>("course-groups", { pageSize: 100 })
+      .then((res) => setGroups(res.items))
+      .catch(() => setGroups([]));
+  }, []);
+
   const [editing, setEditing] = useState<Course | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ courseName: "", status: "active", description: "", imagePath: "" });
+  const [form, setForm] = useState({ courseName: "", status: "active", description: "", imagePath: "", courseGroupId: "", frontendVisible: true });
   const [imageUploading, setImageUploading] = useState(false);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -39,7 +55,7 @@ export default function Courses() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ courseName: "", status: "active", description: "", imagePath: "" });
+    setForm({ courseName: "", status: "active", description: "", imagePath: "", courseGroupId: groups[0]?.id ?? "", frontendVisible: true });
     setImagePreviewUrl(null);
     setFormError(null);
     setShowForm(true);
@@ -52,6 +68,8 @@ export default function Courses() {
       status: course.status,
       description: course.description ?? "",
       imagePath: course.imagePath ?? "",
+      courseGroupId: course.courseGroupId ?? "",
+      frontendVisible: course.frontendVisible,
     });
     setImagePreviewUrl(null);
     setFormError(null);
@@ -76,6 +94,10 @@ export default function Courses() {
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
+    if (!form.courseGroupId) {
+      setFormError("Please select a course group");
+      return;
+    }
     setSaving(true);
     setFormError(null);
     try {
@@ -84,6 +106,8 @@ export default function Courses() {
         status: form.status,
         description: form.description || null,
         imagePath: form.imagePath || null,
+        courseGroupId: form.courseGroupId,
+        frontendVisible: form.frontendVisible,
       };
       if (editing) await adminApi.update("courses", editing.id, payload);
       else await adminApi.create("courses", payload);
@@ -124,16 +148,21 @@ export default function Courses() {
   };
 
   const handleDownload = () => {
-    downloadCsv("courses.csv", ["courseName", "status"],
-      items.map(c => [c.courseName, c.status])
+    downloadCsv("courses.csv", ["courseName", "courseGroup", "frontendVisible", "status", "description"],
+      items.map(c => [c.courseName, groupName(c.courseGroupId), c.frontendVisible ? "true" : "false", c.status, c.description ?? ""])
     );
   };
 
   const handleSample = () => {
-    downloadCsv("courses_sample.csv", ["courseName", "status", "description"], [
-      ["Computer Applications", "active", "Master essential computer skills for the modern workplace"],
-      ["Fashion Design", "active", "Learn cutting-edge fashion design from industry professionals"],
+    downloadCsv("courses_sample.csv", ["courseName", "courseGroup", "frontendVisible", "status", "description"], [
+      ["Diploma in Computer Applications", "Computer Courses", "true", "active", "Master essential computer skills for the modern workplace"],
+      ["Advanced Spoken English", "English Courses", "false", "active", "Conversational English for professionals"],
     ]);
+  };
+
+  const parseBool = (v: string | undefined) => {
+    const s = (v ?? "").trim().toLowerCase();
+    return s === "true" || s === "1" || s === "yes" || s === "y";
   };
 
   const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -144,14 +173,26 @@ export default function Courses() {
     setUploadMsg(null);
     try {
       const rows = await parseUploadedFile(file);
-      const results = await Promise.allSettled(
-        rows.filter(r => r["courseName"]?.trim()).map(r =>
-          adminApi.create("courses", { courseName: r["courseName"].trim(), status: r["status"] || "active" })
-        )
-      );
+      const groupByName = new Map(groups.map((g) => [g.name.toLowerCase(), g.id]));
+      let skipped = 0;
+      const creatable = rows
+        .filter((r) => r["courseName"]?.trim())
+        .map((r) => {
+          const gid = groupByName.get((r["courseGroup"] ?? "").trim().toLowerCase());
+          if (!gid) { skipped++; return null; }
+          return adminApi.create("courses", {
+            courseName: r["courseName"].trim(),
+            status: r["status"]?.trim() || "active",
+            description: r["description"]?.trim() || null,
+            courseGroupId: gid,
+            frontendVisible: parseBool(r["frontendVisible"]),
+          });
+        })
+        .filter((p): p is NonNullable<typeof p> => p !== null);
+      const results = await Promise.allSettled(creatable);
       const ok = results.filter(r => r.status === "fulfilled").length;
-      const fail = results.filter(r => r.status === "rejected").length;
-      setUploadMsg(fail > 0 ? `${ok} imported, ${fail} failed` : `${ok} courses imported`);
+      const fail = results.filter(r => r.status === "rejected").length + skipped;
+      setUploadMsg(`${ok} imported${fail > 0 ? `, ${fail} failed${skipped > 0 ? ` (${skipped} unknown course group)` : ""}` : ""}`);
       reload();
     } catch {
       setUploadMsg("Failed to parse file");
@@ -192,6 +233,12 @@ export default function Courses() {
         )}
       </div>
 
+      {groups.length === 0 && !loading && (
+        <div className="mb-4">
+          <ErrorBanner message="No course groups exist yet. Create a Course Group first — every course must belong to one." />
+        </div>
+      )}
+
       {loading ? (
         <Spinner />
       ) : error ? (
@@ -205,7 +252,8 @@ export default function Courses() {
                   <input type="checkbox" checked={selected.size === items.length && items.length > 0} onChange={toggleAll} className="cursor-pointer accent-[#eaa320]" />
                 </th>
                 <th className="px-4 py-3 font-semibold">Course</th>
-                <th className="px-4 py-3 font-semibold">Description</th>
+                <th className="px-4 py-3 font-semibold">Course Group</th>
+                <th className="px-4 py-3 font-semibold text-center">Frontend</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold text-right">Actions</th>
               </tr>
@@ -217,7 +265,14 @@ export default function Courses() {
                     <input type="checkbox" checked={selected.has(course.id)} onChange={() => toggleSelect(course.id)} className="cursor-pointer accent-[#eaa320]" />
                   </td>
                   <td className="px-4 py-3 font-medium text-gray-900">{course.courseName}</td>
-                  <td className="px-4 py-3 text-gray-500 max-w-xs"><p className="line-clamp-1 text-sm">{course.description ?? "—"}</p></td>
+                  <td className="px-4 py-3 text-gray-600">{groupName(course.courseGroupId)}</td>
+                  <td className="px-4 py-3 text-center">
+                    {course.frontendVisible ? (
+                      <span className="inline-flex items-center gap-1 text-green-600 text-xs font-semibold"><Check size={14} /> Visible</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-gray-400 text-xs font-semibold"><EyeOff size={14} /> Hidden</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3"><StatusBadge status={course.deletedAt ? "deleted" : course.archivedAt ? "inactive" : course.status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
@@ -235,7 +290,7 @@ export default function Courses() {
                 </tr>
               ))}
               {items.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-400">No courses found.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-gray-400">No courses found.</td></tr>
               )}
             </tbody>
           </table>
@@ -247,12 +302,25 @@ export default function Courses() {
           <Field label="Course Name">
             <input required className={inputClass} value={form.courseName} onChange={(e) => setForm({ ...form, courseName: e.target.value })} />
           </Field>
+          <Field label="Course Group">
+            <select required className={inputClass} value={form.courseGroupId} onChange={(e) => setForm({ ...form, courseGroupId: e.target.value })}>
+              <option value="" disabled>Select a course group</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </Field>
           <Field label="Status">
             <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
           </Field>
+          <label className="flex items-center gap-2.5 text-sm cursor-pointer select-none">
+            <input type="checkbox" checked={form.frontendVisible} onChange={(e) => setForm({ ...form, frontendVisible: e.target.checked })} className="cursor-pointer accent-[#eaa320] w-4 h-4" />
+            <span className="font-medium text-gray-700">Frontend visible</span>
+            <span className="text-gray-400 text-xs">(show this course on the public website)</span>
+          </label>
           <Field label="Description">
             <textarea rows={3} className={inputClass + " resize-none"} placeholder="Short description for this course" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>

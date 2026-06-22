@@ -27,16 +27,16 @@ export default function BoutiqueCourses() {
 
       <div className="bento-card overflow-hidden flex flex-col md:flex-row border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 rounded-2xl group w-full min-h-[300px] bg-gradient-to-br from-yellow-50 to-white">
         <div className="w-full md:w-1/2 h-64 md:h-auto overflow-hidden">
-          <img src={course.imageUrl || PLACEHOLDER_IMG} alt={course.subjectName} className="w-full h-full object-cover" />
+          <img src={course.imageUrl || PLACEHOLDER_IMG} alt={course.courseName} className="w-full h-full object-cover" />
         </div>
         <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center gap-4">
           <div>
-            {course.courseName && (
+            {course.groupName && (
               <span className="text-xs font-bold bg-orange-50 text-orange-700 px-3 py-1.5 rounded-full mb-4 inline-block">
-                {course.courseName}
+                {course.groupName}
               </span>
             )}
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">{course.subjectName}</h3>
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">{course.courseName}</h3>
             <p className="text-gray-600 text-base md:text-lg mb-8">{course.description}</p>
           </div>
           <div className="mt-auto flex gap-3 flex-wrap">

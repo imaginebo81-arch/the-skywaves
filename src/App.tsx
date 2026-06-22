@@ -8,7 +8,6 @@ import { Helmet } from "react-helmet-async";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import TrustIndicators from "./components/TrustIndicators";
-import FeaturedCourses from "./components/FeaturedCourses";
 import CoursesSections from "./components/CoursesSections";
 import Testimonials from "./components/Testimonials";
 import EnquiryForm from "./components/EnquiryForm";
@@ -27,6 +26,7 @@ import HypnosisPage from "./pages/HypnosisPage";
 import ResultPrint from "./pages/ResultPrint";
 import AdminApp from "./admin/AdminApp";
 import RegistrationModal from "./components/RegistrationModal";
+import WhatsAppButton from "./components/WhatsAppButton";
 import { ContentProvider, useContent } from "./context/ContentContext";
 import { EnrollProvider } from "./context/EnrollContext";
 
@@ -40,7 +40,6 @@ function HomePage() {
       </Helmet>
       <Hero />
       <TrustIndicators />
-      <FeaturedCourses />
       <CoursesSections />
 
       <div className="w-full bg-[#151b23]">
@@ -68,14 +67,15 @@ function PublicSite() {
           <Route path="/hypnosis" element={<HypnosisPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="/verification" element={<div className="py-20 px-4 md:px-12"><StudentVerification /></div>} />
-          <Route path="/employment-verification" element={<div className="py-20 px-4 md:px-12"><EmploymentVerification /></div>} />
+          <Route path="/verification" element={<div className="py-8 md:py-16 px-3 md:px-12"><StudentVerification /></div>} />
+          <Route path="/employment-verification" element={<div className="py-8 md:py-16 px-3 md:px-12"><EmploymentVerification /></div>} />
           <Route path="/contact" element={<div className="py-20 px-4 md:px-12"><ContactUs /></div>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />
       <RegistrationModal />
+      <WhatsAppButton />
     </div>
   );
 }
@@ -89,9 +89,12 @@ function AppRoutes() {
 
   if (location.pathname.startsWith("/verification/result/")) {
     return (
-      <Routes>
-        <Route path="/verification/result/:rollNumber" element={<ResultPrint />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route path="/verification/result/:rollNumber" element={<ResultPrint />} />
+        </Routes>
+        <WhatsAppButton />
+      </>
     );
   }
 

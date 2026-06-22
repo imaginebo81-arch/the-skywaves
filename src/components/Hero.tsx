@@ -9,9 +9,6 @@ export default function Hero() {
     <section className="w-full bg-dark text-white pt-10 pb-20 relative overflow-hidden flex items-center min-h-[600px]">
       <div className="max-w-[1400px] mx-auto w-full px-4 md:px-12 flex flex-col md:flex-row items-center gap-12">
         <div className="relative z-10 w-full md:w-1/2 flex flex-col gap-6 md:pr-4">
-          <div className="mb-1 inline-block">
-            <img src="/skywave.png" alt="Skywaves Educare" className="h-16 w-auto rounded-xl bg-white/90 p-2 shadow-md" />
-          </div>
           <h1 className="text-[48px] font-extrabold leading-tight">
             {hero.headingLead} <span className="text-[#eaa320]">{hero.headingHighlight}</span>
           </h1>

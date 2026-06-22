@@ -10,6 +10,8 @@ const createSchema = z.object({
   status: z.enum(["active", "inactive"]).default("active"),
   description: z.string().trim().max(5000).optional().nullable(),
   imagePath: z.string().trim().max(500).optional().nullable(),
+  courseGroupId: z.string().uuid(),
+  frontendVisible: z.coerce.boolean().default(false),
 });
 
 const updateSchema = z.object({
@@ -17,6 +19,8 @@ const updateSchema = z.object({
   status: z.enum(["active", "inactive"]).optional(),
   description: z.string().trim().max(5000).optional().nullable(),
   imagePath: z.string().trim().max(500).optional().nullable(),
+  courseGroupId: z.string().uuid().optional(),
+  frontendVisible: z.coerce.boolean().optional(),
 });
 
 export const adminCoursesRouter = buildCrudRouter({

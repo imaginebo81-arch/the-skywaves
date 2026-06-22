@@ -1,21 +1,19 @@
 import { useState, useEffect } from "react";
 import { publicApi } from "../lib/api/public";
 
-// Each item is a subject (isCourse=false) or a bare course with no subjects (isCourse=true).
-// courseName acts as the category grouping on the frontend.
-export interface CatalogSubject {
+// Each item is a frontend-visible course. groupName is the public category (its course group).
+export interface CatalogCourse {
   id: string;
-  subjectName: string;
+  courseName: string;
   description: string | null;
   imageUrl: string | null;
   duration: string | null;
-  courseId: string;
-  courseName: string;
-  isCourse: boolean;
+  groupId: string;
+  groupName: string;
 }
 
 export function useCoursesCatalog(category?: string) {
-  const [courses, setCourses] = useState<CatalogSubject[]>([]);
+  const [courses, setCourses] = useState<CatalogCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,8 +22,8 @@ export function useCoursesCatalog(category?: string) {
     publicApi
       .getCoursesCatalog()
       .then((res) => {
-        const all = res.courses as CatalogSubject[];
-        setCourses(category ? all.filter((c) => c.courseName.toLowerCase() === category.toLowerCase()) : all);
+        const all = res.courses as CatalogCourse[];
+        setCourses(category ? all.filter((c) => c.groupName.toLowerCase() === category.toLowerCase()) : all);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load courses"))
       .finally(() => setLoading(false));

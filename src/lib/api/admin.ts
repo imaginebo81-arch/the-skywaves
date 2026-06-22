@@ -25,14 +25,14 @@ export const adminApi = {
   // Generic helpers for resource modules
   list: <T>(resource: string, params?: ListParams) =>
     api.get<Paginated<T>>(`/admin/${resource}`, params),
-  get: <T>(resource: string, id: string) => api.get<T>(`/admin/${resource}/${id}`),
+  get: <T>(resource: string, id: string) => api.get<T>(`/admin/${resource}/${encodeURIComponent(id)}`),
   create: <T>(resource: string, body: unknown) => api.post<T>(`/admin/${resource}`, body),
   update: <T>(resource: string, id: string, body: unknown) =>
-    api.patch<T>(`/admin/${resource}/${id}`, body),
-  remove: (resource: string, id: string) => api.del(`/admin/${resource}/${id}`),
-  restore: (resource: string, id: string) => api.post(`/admin/${resource}/${id}/restore`),
-  archive: (resource: string, id: string) => api.post(`/admin/${resource}/${id}/archive`),
-  unarchive: (resource: string, id: string) => api.post(`/admin/${resource}/${id}/unarchive`),
+    api.patch<T>(`/admin/${resource}/${encodeURIComponent(id)}`, body),
+  remove: (resource: string, id: string) => api.del(`/admin/${resource}/${encodeURIComponent(id)}`),
+  restore: (resource: string, id: string) => api.post(`/admin/${resource}/${encodeURIComponent(id)}/restore`),
+  archive: (resource: string, id: string) => api.post(`/admin/${resource}/${encodeURIComponent(id)}/archive`),
+  unarchive: (resource: string, id: string) => api.post(`/admin/${resource}/${encodeURIComponent(id)}/unarchive`),
 
   // Subjects (filtered by course)
   subjectsByCourse: <T>(courseId: string, includeArchived = false) =>

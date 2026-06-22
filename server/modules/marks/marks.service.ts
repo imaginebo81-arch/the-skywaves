@@ -15,17 +15,24 @@ interface MarkJoinRow {
     min_marks: number;
     max_marks: number;
     display_order: number;
+    status: string | null;
+    deleted_at: string | null;
   } | null;
+}
+
+function isSubjectActive(subject: MarkJoinRow["subjects"]): boolean {
+  return !!subject && subject.deleted_at == null && (subject.status ?? "active") === "active";
 }
 
 async function fetchMarkRows(rollNumber: string): Promise<{ id: string; mark: MarkRow }[]> {
   const { data, error } = await supabase
     .from("student_marks")
-    .select("id, subject_id, obtained_marks, grade, subjects(subject_name, min_marks, max_marks, display_order)")
+    .select("id, subject_id, obtained_marks, grade, subjects(subject_name, min_marks, max_marks, display_order, status, deleted_at)")
     .eq("roll_number", rollNumber)
     .is("deleted_at", null);
   if (error) throw ApiError.internal("Failed to load marks");
   return ((data ?? []) as unknown as MarkJoinRow[])
+    .filter((r) => isSubjectActive(r.subjects))
     .map((r) => ({
       id: r.id,
       mark: {
@@ -123,11 +130,11 @@ export async function getStudentResult(rollNumber: string) {
   const course = (student as { courses?: { course_name?: string } | null }).courses;
   const courseGrade = (student as { grade?: string | null }).grade ?? null;
 
-  const hasMarks = rows.some((r) => r.mark.obtainedMarks !== null);
-  const resultType: "marksheet" | "gradecard" | "pending" = hasMarks
-    ? "marksheet"
-    : courseGrade != null
-      ? "gradecard"
+  const allMarksEntered = rows.length > 0 && rows.every((r) => r.mark.obtainedMarks !== null);
+  const resultType: "marksheet" | "gradecard" | "pending" = courseGrade != null
+    ? "gradecard"
+    : allMarksEntered
+      ? "marksheet"
       : "pending";
 
   const { signedPhotoUrl } = await import("../storage/storage.service");
@@ -178,7 +185,7 @@ export async function listAllMarks(query: ListQuery, courseId?: string) {
     subject_id: string;
     obtained_marks: number | null;
     grade: string | null;
-    subjects: { subject_name: string; min_marks: number; max_marks: number; display_order: number } | null;
+    subjects: { subject_name: string; min_marks: number; max_marks: number; display_order: number; status: string | null; deleted_at: string | null } | null;
   };
 
   let studentsBuilder = supabase
@@ -206,11 +213,13 @@ export async function listAllMarks(query: ListQuery, courseId?: string) {
 
   const { data: marksData } = await supabase
     .from("student_marks")
-    .select("id, roll_number, subject_id, obtained_marks, grade, subjects(subject_name, min_marks, max_marks, display_order)")
+    .select("id, roll_number, subject_id, obtained_marks, grade, subjects(subject_name, min_marks, max_marks, display_order, status, deleted_at)")
     .in("roll_number", rollNumbers)
     .is("deleted_at", null);
 
-  const rawMarks = (marksData ?? []) as unknown as RawMark[];
+  const rawMarks = ((marksData ?? []) as unknown as RawMark[]).filter(
+    (m) => !!m.subjects && m.subjects.deleted_at == null && (m.subjects.status ?? "active") === "active"
+  );
   const passPercentage = await getPassPercentage();
 
   const marksByRoll = new Map<string, RawMark[]>();
@@ -235,12 +244,12 @@ export async function listAllMarks(query: ListQuery, courseId?: string) {
     }));
 
     const summary = computeResult(markRows, passPercentage);
-    const hasMarks = markRows.some((r) => r.obtainedMarks !== null);
     const courseGrade = s.grade;
-    const resultType: "marksheet" | "gradecard" | "pending" = hasMarks
-      ? "marksheet"
-      : courseGrade != null
-        ? "gradecard"
+    const allMarksEntered = markRows.length > 0 && markRows.every((r) => r.obtainedMarks !== null);
+    const resultType: "marksheet" | "gradecard" | "pending" = courseGrade != null
+      ? "gradecard"
+      : allMarksEntered
+        ? "marksheet"
         : "pending";
 
     return {

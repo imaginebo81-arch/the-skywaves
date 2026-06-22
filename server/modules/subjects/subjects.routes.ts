@@ -28,6 +28,7 @@ const createSchema = z
     description: z.string().trim().max(5000).optional().nullable(),
     imagePath: z.string().trim().max(500).optional().nullable(),
     duration: z.string().trim().max(100).optional().nullable(),
+    status: z.enum(["active", "inactive"]).default("active"),
   })
   .refine((v) => v.minMarks <= v.maxMarks, {
     message: "minMarks cannot exceed maxMarks",
@@ -42,6 +43,7 @@ const updateSchema = z.object({
   description: z.string().trim().max(5000).optional().nullable(),
   imagePath: z.string().trim().max(500).optional().nullable(),
   duration: z.string().trim().max(100).optional().nullable(),
+  status: z.enum(["active", "inactive"]).optional(),
 });
 
 export const adminSubjectsRouter = Router();

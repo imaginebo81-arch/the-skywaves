@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useEnroll } from "../context/EnrollContext";
-import { useCoursesCatalog, type CatalogSubject } from "../hooks/useCoursesCatalog";
+import { useCoursesCatalog, type CatalogCourse } from "../hooks/useCoursesCatalog";
 import CourseModal from "./CourseModal";
 
 const sectionGradients = [
@@ -19,30 +19,28 @@ const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1497633762265-9d179a9
 export default function CoursesSections() {
   const { openEnroll } = useEnroll();
   const { courses, loading } = useCoursesCatalog();
-  const [selected, setSelected] = useState<CatalogSubject | null>(null);
+  const [selected, setSelected] = useState<CatalogCourse | null>(null);
 
   if (loading || courses.length === 0) return null;
 
-  const grouped: { courseId: string; courseName: string; subjects: CatalogSubject[] }[] = [];
-  const indexByCourseId: Record<string, number> = {};
-  for (const s of courses) {
-    if (indexByCourseId[s.courseId] === undefined) {
-      indexByCourseId[s.courseId] = grouped.length;
-      grouped.push({ courseId: s.courseId, courseName: s.courseName, subjects: [] });
+  const grouped: { groupId: string; groupName: string; courses: CatalogCourse[] }[] = [];
+  const indexByGroupId: Record<string, number> = {};
+  for (const c of courses) {
+    if (indexByGroupId[c.groupId] === undefined) {
+      indexByGroupId[c.groupId] = grouped.length;
+      grouped.push({ groupId: c.groupId, groupName: c.groupName, courses: [] });
     }
-    grouped[indexByCourseId[s.courseId]].subjects.push(s);
+    grouped[indexByGroupId[c.groupId]].courses.push(c);
   }
 
   return (
     <>
       {grouped.map((group, gi) => (
-        <section key={group.courseId} className="w-full max-w-[1400px] mx-auto px-4 md:px-12 pb-16">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">{group.courseName}</h2>
-            </div>
+        <section key={group.groupId} className="w-full max-w-[1400px] mx-auto px-4 md:px-12 pt-4 pb-16">
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end mb-8 gap-2 md:gap-4">
+            <h2 className="text-3xl font-bold text-gray-900">{group.groupName}</h2>
             <Link
-              to={`/courses?category=${encodeURIComponent(group.courseName)}`}
+              to={`/courses?category=${encodeURIComponent(group.groupName)}`}
               className="text-[#eaa320] font-bold flex items-center gap-2 hover:text-[#de9b1f] transition-colors whitespace-nowrap"
             >
               View all courses <ArrowRight size={18} />
@@ -50,7 +48,7 @@ export default function CoursesSections() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {group.subjects.slice(0, 3).map((course, index) => (
+            {group.courses.slice(0, 3).map((course, index) => (
               <div
                 key={course.id}
                 onClick={() => setSelected(course)}
@@ -59,13 +57,13 @@ export default function CoursesSections() {
                 <div className="aspect-[16/10] overflow-hidden">
                   <img
                     src={course.imageUrl || PLACEHOLDER_IMG}
-                    alt={course.subjectName}
+                    alt={course.courseName}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
                 <div className="p-6 flex flex-col flex-grow gap-3">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">{course.subjectName}</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{course.courseName}</h3>
                     <p className="text-gray-600 text-sm line-clamp-3">{course.description}</p>
                   </div>
                   <div className="mt-auto pt-4 flex gap-2" onClick={(e) => e.stopPropagation()}>

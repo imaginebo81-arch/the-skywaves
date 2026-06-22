@@ -8,6 +8,7 @@ import { ApiError } from "./lib/errors";
 import authRouter from "./modules/auth/auth.routes";
 import { publicContentRouter, adminContentRouter } from "./modules/content/content.routes";
 import { publicCoursesRouter, adminCoursesRouter } from "./modules/courses/courses.routes";
+import { publicCourseGroupsRouter, adminCourseGroupsRouter } from "./modules/courseGroups/courseGroups.routes";
 import { adminSubjectsRouter } from "./modules/subjects/subjects.routes";
 import { publicRegistrationsRouter, adminRegistrationsRouter } from "./modules/registrations/registrations.routes";
 import { adminStudentsRouter } from "./modules/students/students.routes";
@@ -34,6 +35,7 @@ export function buildApiRouter(): Router {
   pub.use(publicRateLimit);
   pub.use("/content", publicContentRouter);
   pub.use("/courses", publicCoursesRouter);
+  pub.use("/course-groups", publicCourseGroupsRouter);
   pub.use("/registrations", publicRegistrationsRouter);
   pub.use("/uploads", publicUploadsRouter);
   pub.use("/verify", publicVerificationRouter);
@@ -51,6 +53,7 @@ export function buildApiRouter(): Router {
   admin.use("/dashboard", adminDashboardRouter);
   admin.use("/content", adminContentRouter);
   admin.use("/courses", adminCoursesRouter);
+  admin.use("/course-groups", adminCourseGroupsRouter);
   admin.use("/subjects", adminSubjectsRouter);
   admin.use("/registrations", adminRegistrationsRouter);
   admin.use("/students", adminStudentsRouter);

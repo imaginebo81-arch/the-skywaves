@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, type FormEvent, type ChangeEvent } from "react";
 import { Plus, Pencil, Trash2, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { adminApi } from "../../lib/api/admin";
-import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, PhotoAvatar } from "../components/ui";
+import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, PhotoAvatar, StatusBadge } from "../components/ui";
 import { downloadCsv, parseUploadedFile } from "../../lib/csv";
 
 interface Course {
@@ -19,6 +19,7 @@ interface Subject {
   imagePath: string | null;
   imageUrl: string | null;
   duration: string | null;
+  status: string;
 }
 
 export default function Subjects() {
@@ -30,7 +31,7 @@ export default function Subjects() {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subject | null>(null);
-  const [form, setForm] = useState({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: 0, description: "", imagePath: "", duration: "" });
+  const [form, setForm] = useState({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: 0, description: "", imagePath: "", duration: "", status: "active" });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
@@ -68,7 +69,7 @@ export default function Subjects() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: subjects.length, description: "", imagePath: "", duration: "" });
+    setForm({ subjectName: "", minMarks: 35, maxMarks: 100, displayOrder: subjects.length, description: "", imagePath: "", duration: "", status: "active" });
     setImagePreviewUrl(null);
     setFormError(null);
     setShowForm(true);
@@ -76,7 +77,7 @@ export default function Subjects() {
 
   const openEdit = (s: Subject) => {
     setEditing(s);
-    setForm({ subjectName: s.subjectName, minMarks: s.minMarks, maxMarks: s.maxMarks, displayOrder: s.displayOrder, description: s.description ?? "", imagePath: s.imagePath ?? "", duration: s.duration ?? "" });
+    setForm({ subjectName: s.subjectName, minMarks: s.minMarks, maxMarks: s.maxMarks, displayOrder: s.displayOrder, description: s.description ?? "", imagePath: s.imagePath ?? "", duration: s.duration ?? "", status: s.status ?? "active" });
     setImagePreviewUrl(s.imageUrl ?? null);
     setFormError(null);
     setShowForm(true);
@@ -111,6 +112,7 @@ export default function Subjects() {
         description: form.description || null,
         imagePath: form.imagePath || null,
         duration: form.duration || null,
+        status: form.status,
       };
       if (editing) {
         await adminApi.update("subjects", editing.id, payload);
@@ -149,15 +151,15 @@ export default function Subjects() {
   };
 
   const handleDownload = () => {
-    downloadCsv("subjects.csv", ["subjectName", "duration", "minMarks", "maxMarks", "description"],
-      subjects.map(s => [s.subjectName, s.duration ?? "", s.minMarks, s.maxMarks, s.description ?? ""])
+    downloadCsv("subjects.csv", ["subjectName", "duration", "minMarks", "maxMarks", "status", "description"],
+      subjects.map(s => [s.subjectName, s.duration ?? "", s.minMarks, s.maxMarks, s.status, s.description ?? ""])
     );
   };
 
   const handleSample = () => {
-    downloadCsv("subjects_sample.csv", ["subjectName", "duration", "minMarks", "maxMarks", "description"], [
-      ["Theory of Design", "3 Months", "35", "100", "Fundamentals of design theory and principles"],
-      ["Practical Workshop", "2 Months", "40", "100", "Hands-on practical sessions with expert guidance"],
+    downloadCsv("subjects_sample.csv", ["subjectName", "duration", "minMarks", "maxMarks", "status", "description"], [
+      ["Theory of Design", "3 Months", "35", "100", "active", "Fundamentals of design theory and principles"],
+      ["Practical Workshop", "2 Months", "40", "100", "active", "Hands-on practical sessions with expert guidance"],
     ]);
   };
 
@@ -178,6 +180,8 @@ export default function Subjects() {
             minMarks: Number(r["minMarks"]) || 35,
             maxMarks: Number(r["maxMarks"]) || 100,
             displayOrder: Number(r["displayOrder"]) || 0,
+            duration: r["duration"]?.trim() || null,
+            status: r["status"]?.trim() || "active",
           })
         )
       );
@@ -241,6 +245,7 @@ export default function Subjects() {
               <th className="px-4 py-3 font-semibold">Duration</th>
               <th className="px-4 py-3 font-semibold text-center">Min</th>
               <th className="px-4 py-3 font-semibold text-center">Max</th>
+              <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Description</th>
               <th className="px-4 py-3 font-semibold text-right">Actions</th>
             </tr>
@@ -258,6 +263,7 @@ export default function Subjects() {
                 <td className="px-4 py-3 text-gray-600">{s.duration ?? "—"}</td>
                 <td className="px-4 py-3 text-center text-gray-600">{s.minMarks}</td>
                 <td className="px-4 py-3 text-center text-gray-600">{s.maxMarks}</td>
+                <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
                 <td className="px-4 py-3 text-gray-500 max-w-[200px]"><p className="line-clamp-1 text-xs">{s.description ?? "—"}</p></td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
@@ -268,7 +274,7 @@ export default function Subjects() {
               </tr>
             ))}
             {subjects.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400">No subjects for this course.</td></tr>
+              <tr><td colSpan={9} className="px-4 py-10 text-center text-gray-400">No subjects for this course.</td></tr>
             )}
           </tbody>
         </table>
@@ -287,9 +293,17 @@ export default function Subjects() {
               <input type="number" className={inputClass} value={form.maxMarks} onChange={(e) => setForm({ ...form, maxMarks: Number(e.target.value) })} />
             </Field>
           </div>
-          <Field label="Duration">
-            <input className={inputClass} placeholder="e.g. 3 Months, 1 Year" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Duration">
+              <input className={inputClass} placeholder="e.g. 3 Months, 1 Year" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
+            </Field>
+            <Field label="Status">
+              <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </Field>
+          </div>
           <Field label="Description">
             <textarea rows={2} className={inputClass + " resize-none"} placeholder="Short description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>

@@ -113,20 +113,9 @@ body {
     -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 
-@page {
-    size: A4;
-    margin: 0;
-}
-
 @media print {
     .no-print {
         display: none !important;
-    }
-    .print-sheet {
-        width: 210mm !important;
-        min-height: 297mm !important;
-        box-shadow: none !important;
-        margin: 0 !important;
     }
     html, body {
         background: #ffffff !important;

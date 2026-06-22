@@ -129,10 +129,7 @@ export const defaultSiteContent: SiteContent = {
     ],
     coursesDropdown: {
       label: "Courses",
-      items: [
-        { label: "Computer Courses", to: "/courses?category=Diploma" },
-        { label: "English Courses", to: "/courses?category=English" },
-      ],
+      items: [],
     },
     verificationDropdown: {
       label: "Verification",
@@ -295,8 +292,7 @@ export const defaultSiteContent: SiteContent = {
       { label: "Employment Verification", to: "/employment-verification" },
     ],
     courseLinks: [
-      { label: "Computer Courses", to: "/courses?category=Diploma" },
-      { label: "English Courses", to: "/courses?category=English" },
+      { label: "All Courses", to: "/courses" },
       { label: "Fashion", to: "/fashion" },
       { label: "Hypnosis", to: "/hypnosis" },
     ],

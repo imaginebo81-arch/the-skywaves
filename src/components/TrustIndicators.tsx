@@ -7,7 +7,7 @@ export default function TrustIndicators() {
   const { trustIndicators } = useContent();
 
   return (
-    <div className="w-full max-w-6xl mx-auto mt-4 md:-mt-10 relative z-20 px-4">
+    <div className="w-full max-w-6xl mx-auto mt-4 md:-mt-10 mb-12 md:mb-16 relative z-20 px-4">
       <div className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 grid grid-cols-2 sm:grid-cols-4 py-6 px-4 md:px-10 divide-y-0 sm:divide-x divide-gray-100">
         {trustIndicators.map((item, idx) => {
           const Icon = ICONS[item.icon] ?? CheckCircle;

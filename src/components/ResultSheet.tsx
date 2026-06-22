@@ -16,13 +16,13 @@ export default function ResultSheet({ result }: { result: StudentResult }) {
   return (
     <div className="w-full bg-white shadow-lg overflow-hidden text-left rounded-2xl border border-gray-100 print:shadow-none print:rounded-none print:border-gray-200">
       {/* Header */}
-      <div className="bg-[#151b23] text-white px-10 py-6 flex items-center justify-between">
+      <div className="bg-[#151b23] text-white px-4 py-4 sm:px-10 sm:py-6 flex flex-wrap items-start sm:items-center gap-2 justify-between">
         <div>
-          <h2 className="text-2xl font-black uppercase tracking-widest text-white leading-tight">{meta.orgName}</h2>
-          <p className="text-[#eaa320] text-[11px] font-semibold uppercase tracking-[3px] mt-1">Verified Academic Record</p>
+          <h2 className="text-base sm:text-2xl font-black uppercase tracking-wide sm:tracking-widest text-white leading-tight">{meta.orgName}</h2>
+          <p className="text-[#eaa320] text-[10px] font-semibold uppercase tracking-[2px] sm:tracking-[3px] mt-0.5 sm:mt-1">Verified Academic Record</p>
         </div>
         <div className="text-right">
-          <p className="text-gray-300 text-sm uppercase tracking-widest font-semibold">Statement of Marks</p>
+          <p className="text-gray-300 text-xs sm:text-sm uppercase tracking-wide sm:tracking-widest font-semibold">Statement of Marks</p>
         </div>
       </div>
       <div className="h-1.5 bg-gradient-to-r from-[#eaa320] to-[#f5c842]" />
@@ -30,7 +30,7 @@ export default function ResultSheet({ result }: { result: StudentResult }) {
       {/* Body */}
       <div className="flex flex-col md:flex-row min-h-[360px]">
         {/* Left panel — 30% */}
-        <div className="md:w-[30%] bg-gray-50 px-8 py-8 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-gray-200">
+        <div className="md:w-[30%] bg-gray-50 px-4 py-5 sm:px-8 sm:py-8 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-gray-200">
           <div className="flex justify-center">
             {student.profilePhotoUrl ? (
               <img
@@ -62,10 +62,20 @@ export default function ResultSheet({ result }: { result: StudentResult }) {
         </div>
 
         {/* Right panel — 70% */}
-        <div className="md:w-[70%] px-8 py-8 flex flex-col gap-5">
+        <div className="md:w-[70%] px-4 py-5 sm:px-8 sm:py-8 flex flex-col gap-5">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-[2px]">Academic Performance</p>
 
-          {marks.length > 0 ? (
+          {summary.hasPendingMarks ? (
+            <div className="flex-1 flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">⏳</span>
+                </div>
+                <p className="text-gray-600 font-semibold text-base">Result Pending</p>
+                <p className="text-gray-400 text-sm mt-1.5">Result will be available once all subject marks are entered by the institute.</p>
+              </div>
+            </div>
+          ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
@@ -103,7 +113,6 @@ export default function ResultSheet({ result }: { result: StudentResult }) {
                 </table>
               </div>
 
-              {/* Result row — percentage only, no grade letter, no pass mark */}
               <div className="flex items-center justify-between pt-1 border-t border-gray-100 mt-auto">
                 <div className="flex items-baseline gap-2">
                   <span className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Percentage</span>
@@ -113,29 +122,13 @@ export default function ResultSheet({ result }: { result: StudentResult }) {
                   {resultLabel}
                 </div>
               </div>
-
-              {summary.hasPendingMarks && (
-                <p className="text-amber-600 text-xs bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
-                  Some subject marks are pending — final result will update once all marks are entered.
-                </p>
-              )}
             </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-3xl">📋</span>
-                </div>
-                <p className="text-gray-600 font-semibold text-base">Marks Not Yet Entered</p>
-                <p className="text-gray-400 text-sm mt-1.5">Result will be available once marks are updated by the institute.</p>
-              </div>
-            </div>
           )}
         </div>
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-50 border-t border-gray-200 px-10 py-3.5 text-center">
+      <div className="bg-gray-50 border-t border-gray-200 px-4 sm:px-10 py-3.5 text-center">
         <p className="text-gray-400 text-[10px] uppercase tracking-widest">
           Computer-Generated Document · {meta.orgName} · Issued via Official Verification Portal
         </p>

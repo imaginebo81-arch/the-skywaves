@@ -73,15 +73,19 @@ export const publicApi = {
     api.get<{
       courses: {
         id: string;
-        subjectName: string;
+        courseName: string;
         description: string | null;
         imageUrl: string | null;
         duration: string | null;
-        courseId: string;
-        courseName: string;
-        isCourse: boolean;
+        groupId: string;
+        groupName: string;
       }[];
     }>("/public/courses/catalog"),
+
+  getCourseGroups: () =>
+    api.get<{
+      groups: { id: string; name: string; description: string | null; imageUrl: string | null }[];
+    }>("/public/course-groups"),
 
   getSocialLinks: () =>
     api.get<{ facebook: string; instagram: string; youtube: string; twitter: string; linkedin: string }>(
