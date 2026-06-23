@@ -16,6 +16,7 @@ export interface CrudConfig<Dto> {
   defaultOrder?: { column: string; ascending: boolean };
   supportsArchive?: boolean;
   toDto: (row: Record<string, unknown>) => Dto;
+  onBeforeDelete?: (id: string) => Promise<void>;
 }
 
 export function createCrud<Dto>(config: CrudConfig<Dto>) {
@@ -28,6 +29,7 @@ export function createCrud<Dto>(config: CrudConfig<Dto>) {
     defaultOrder = { column: "created_at", ascending: false },
     supportsArchive = true,
     toDto,
+    onBeforeDelete,
   } = config;
 
   async function list(query: ListQuery) {
@@ -135,6 +137,20 @@ export function createCrud<Dto>(config: CrudConfig<Dto>) {
     return toDto(asRow(data));
   }
 
+  async function hardDelete(id: string, actorId: string): Promise<{ id: string }> {
+    const prev = await getRaw(id);
+    if (onBeforeDelete) await onBeforeDelete(id);
+    const { error } = await supabase.from(table).delete().eq(pk, id);
+    if (error) {
+      if (error.code === "23503") {
+        throw ApiError.badRequest(`Cannot delete ${entity}: it is still referenced by other records.`);
+      }
+      throw ApiError.internal(`Failed to delete ${entity}: ${error.message}`);
+    }
+    await writeAudit({ actorId, action: `${entity}.delete`, entity, entityId: String(id), prevValue: prev, newValue: null });
+    return { id: String(id) };
+  }
+
   const nowIso = () => new Date().toISOString();
 
   return {
@@ -143,7 +159,8 @@ export function createCrud<Dto>(config: CrudConfig<Dto>) {
     getRaw,
     create,
     update,
-    softDelete: (id: string, actorId: string) => setFlag(id, "deleted_at", nowIso(), "delete", actorId),
+    hardDelete,
+    softDelete: hardDelete,
     archive: (id: string, actorId: string) => setFlag(id, "archived_at", nowIso(), "archive", actorId),
     restore: (id: string, actorId: string) => setFlag(id, "deleted_at", null, "restore", actorId),
     unarchive: (id: string, actorId: string) => setFlag(id, "archived_at", null, "unarchive", actorId),

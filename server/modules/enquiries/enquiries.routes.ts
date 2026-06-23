@@ -84,7 +84,7 @@ adminEnquiriesRouter.delete(
   asyncHandler(async (req, res) => {
     const { error } = await supabase
       .from("enquiries")
-      .update({ deleted_at: new Date().toISOString() })
+      .delete()
       .eq("id", req.params.id);
     if (error) throw ApiError.internal("Failed to delete enquiry");
     await writeAudit({ actorId: req.admin!.sub, action: "enquiry.delete", entity: "enquiries", entityId: req.params.id });

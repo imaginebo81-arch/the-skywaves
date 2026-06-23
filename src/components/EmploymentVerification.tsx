@@ -1,4 +1,4 @@
-import { CheckCircle, Loader2, Calendar } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { useState, useEffect, type FormEvent } from "react";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -20,27 +20,17 @@ export default function EmploymentVerification() {
   const { mutate, loading, error } = useMutation(publicApi.verifyEmployee);
   const [data, setData] = useState<EmployeeVerificationData | null>(null);
   const [ref, setRef] = useState("");
-  const [dob, setDob] = useState(""); // stored as DD/MM/YYYY
+  const [name, setName] = useState("");
   const location = useLocation();
 
   useEffect(() => {
     setData(null);
   }, [location.key]);
 
-  function handleDobInput(val: string) {
-    const digits = val.replace(/\D/g, "").slice(0, 8);
-    let out = digits.slice(0, 2);
-    if (digits.length > 2) out += "/" + digits.slice(2, 4);
-    if (digits.length > 4) out += "/" + digits.slice(4, 8);
-    setDob(out);
-  }
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const [dd, mm, yyyy] = dob.split("/");
-      const isoDate = `${yyyy}-${(mm ?? "").padStart(2, "0")}-${(dd ?? "").padStart(2, "0")}`;
-      setData(await mutate(ref.trim(), isoDate));
+      setData(await mutate(ref.trim(), name.trim()));
     } catch {
       // error surfaced via hook
     }
@@ -146,35 +136,15 @@ export default function EmploymentVerification() {
 
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-gray-600">Date of Birth</label>
-          <div className="relative flex items-center">
-            <input
-              required
-              value={dob}
-              onChange={(e) => handleDobInput(e.target.value)}
-              placeholder="DD/MM/YYYY"
-              pattern="\d{2}/\d{2}/\d{4}"
-              inputMode="numeric"
-              className="w-full rounded-xl border border-gray-300 bg-white focus:border-[#eaa320] focus:outline-none focus:ring-2 focus:ring-[#eaa320]/20 p-4 pr-12 text-base"
-              type="text"
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 group">
-              <span className="pointer-events-none absolute inset-0 flex items-center justify-center z-10 text-gray-400 group-hover:text-[#eaa320] transition-colors">
-                <Calendar size={20} />
-              </span>
-              <input
-                type="date"
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                tabIndex={-1}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    const [y, m, d] = e.target.value.split("-");
-                    setDob(`${d}/${m}/${y}`);
-                  }
-                }}
-              />
-            </div>
-          </div>
+          <label className="text-sm font-semibold text-gray-600">Employee Name</label>
+          <input
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-xl border border-gray-300 bg-white focus:border-[#eaa320] focus:outline-none focus:ring-2 focus:ring-[#eaa320]/20 p-4 text-base uppercase placeholder:normal-case"
+            placeholder="Enter the employee's full name"
+            type="text"
+          />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -183,7 +153,7 @@ export default function EmploymentVerification() {
             required
             value={ref}
             onChange={(e) => setRef(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white focus:border-[#eaa320] focus:outline-none focus:ring-2 focus:ring-[#eaa320]/20 p-4 text-base tracking-wider"
+            className="w-full rounded-xl border border-gray-300 bg-white focus:border-[#eaa320] focus:outline-none focus:ring-2 focus:ring-[#eaa320]/20 p-4 text-base tracking-wider uppercase placeholder:normal-case placeholder:tracking-normal"
             placeholder={cfg.refPlaceholder}
             type="text"
           />

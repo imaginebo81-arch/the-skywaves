@@ -55,6 +55,8 @@ export async function signEmployeePhoto(dto: EmployeeDto) {
   return { ...dto, profilePhotoUrl: await signedPhotoUrl(dto.profilePhotoPath) };
 }
 
+const UPPERCASE_COLUMNS = new Set(["employment_reference_number", "name", "father_name"]);
+
 export function toEmployeeRow(input: Record<string, unknown>) {
   const map: Record<string, string> = {
     employmentReferenceNumber: "employment_reference_number",
@@ -72,7 +74,9 @@ export function toEmployeeRow(input: Record<string, unknown>) {
   };
   const row: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(input)) {
-    if (map[k]) row[map[k]] = v;
+    if (!map[k]) continue;
+    const col = map[k];
+    row[col] = UPPERCASE_COLUMNS.has(col) && typeof v === "string" ? v.trim().replace(/\s+/g, " ").toUpperCase() : v;
   }
   return row;
 }

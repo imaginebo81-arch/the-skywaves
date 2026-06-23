@@ -48,9 +48,11 @@ export async function uploadEmployeePhoto(file: Express.Multer.File): Promise<st
   return uploadToStorage(file, "employees");
 }
 
-export async function signedPhotoUrl(path: string | null, expiresIn = 3600): Promise<string | null> {
+// Images are served through our own domain (same-origin proxy) instead of the raw
+// Supabase/Kong host. Some ISPs (e.g. Jio) block *.up.railway.app, which broke image
+// loading on those networks. The proxy streams bytes from storage via the app domain.
+export async function signedPhotoUrl(path: string | null): Promise<string | null> {
   if (!path) return null;
-  const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, expiresIn);
-  if (error) return null;
-  return data?.signedUrl ?? null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `/api/public/image?p=${encodeURIComponent(path)}`;
 }

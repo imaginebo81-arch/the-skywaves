@@ -31,6 +31,15 @@ export function toStudentDto(row: Record<string, unknown>) {
   };
 }
 
+const UPPERCASE_COLUMNS = new Set(["roll_number", "name", "father_name", "mother_name"]);
+
+function normalizeValue(column: string, value: unknown) {
+  if (UPPERCASE_COLUMNS.has(column) && typeof value === "string") {
+    return value.trim().replace(/\s+/g, " ").toUpperCase();
+  }
+  return value;
+}
+
 export function toStudentRow(input: Record<string, unknown>) {
   const map: Record<string, string> = {
     rollNumber: "roll_number",
@@ -49,7 +58,7 @@ export function toStudentRow(input: Record<string, unknown>) {
   };
   const row: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(input)) {
-    if (map[k]) row[map[k]] = v;
+    if (map[k]) row[map[k]] = normalizeValue(map[k], v);
   }
   return row;
 }
@@ -100,17 +109,44 @@ export async function createStudent(input: Record<string, unknown>, actorId: str
   return toStudentDto(data as Record<string, unknown>);
 }
 
+async function renameStudentRoll(oldRoll: string, newRoll: string) {
+  const { data: existing } = await supabase.from("students").select("roll_number").eq("roll_number", newRoll).maybeSingle();
+  if (existing) throw ApiError.conflict("Roll number already in use");
+  const { data: current, error: readErr } = await supabase.from("students").select("*").eq("roll_number", oldRoll).single();
+  if (readErr || !current) throw ApiError.notFound("Student not found");
+  const copy = { ...(current as Record<string, unknown>), roll_number: newRoll };
+  const { error: insErr } = await supabase.from("students").insert(copy);
+  if (insErr) throw ApiError.internal(`Failed to rename roll number: ${insErr.message}`);
+  await supabase.from("student_marks").update({ roll_number: newRoll }).eq("roll_number", oldRoll);
+  await supabase.from("registrations").update({ student_roll_number: newRoll }).eq("student_roll_number", oldRoll);
+  const { error: delErr } = await supabase.from("students").delete().eq("roll_number", oldRoll);
+  if (delErr) throw ApiError.internal(`Failed to rename roll number: ${delErr.message}`);
+}
+
 export async function updateStudent(rollNumber: string, input: Record<string, unknown>, actorId: string) {
   const { data: prev } = await supabase.from("students").select("*").eq("roll_number", rollNumber).maybeSingle();
   if (!prev) throw ApiError.notFound("Student not found");
   const row = toStudentRow(input);
+  const newRoll = typeof row.roll_number === "string" ? (row.roll_number as string) : undefined;
   delete row.roll_number;
-  const { data, error } = await supabase.from("students").update(row).eq("roll_number", rollNumber).select(SELECT).single();
-  if (error) throw ApiError.internal(`Failed to update student: ${error.message}`);
-  if (row.course_id && row.course_id !== prev.course_id) {
-    await syncMarksWithCourse(rollNumber, row.course_id as string);
+
+  let effectiveRoll = rollNumber;
+  if (newRoll && newRoll !== rollNumber) {
+    await renameStudentRoll(rollNumber, newRoll);
+    effectiveRoll = newRoll;
   }
-  await writeAudit({ actorId, action: "student.update", entity: "students", entityId: rollNumber, prevValue: prev, newValue: data });
+
+  if (Object.keys(row).length > 0) {
+    const { error } = await supabase.from("students").update(row).eq("roll_number", effectiveRoll);
+    if (error) throw ApiError.internal(`Failed to update student: ${error.message}`);
+  }
+
+  if (row.course_id && row.course_id !== prev.course_id) {
+    await syncMarksWithCourse(effectiveRoll, row.course_id as string);
+  }
+
+  const { data } = await supabase.from("students").select(SELECT).eq("roll_number", effectiveRoll).single();
+  await writeAudit({ actorId, action: "student.update", entity: "students", entityId: effectiveRoll, prevValue: prev, newValue: data });
   return toStudentDto(data as Record<string, unknown>);
 }
 
@@ -125,14 +161,24 @@ async function setFlag(rollNumber: string, column: "deleted_at" | "archived_at",
 
 export const archiveStudent = (r: string, a: string) => setFlag(r, "archived_at", new Date().toISOString(), "archive", a);
 export const unarchiveStudent = (r: string, a: string) => setFlag(r, "archived_at", null, "unarchive", a);
-export const deleteStudent = (r: string, a: string) => setFlag(r, "deleted_at", new Date().toISOString(), "delete", a);
 export const restoreStudent = (r: string, a: string) => setFlag(r, "deleted_at", null, "restore", a);
+
+export async function deleteStudent(rollNumber: string, actorId: string) {
+  const { data: prev } = await supabase.from("students").select("*").eq("roll_number", rollNumber).maybeSingle();
+  if (!prev) throw ApiError.notFound("Student not found");
+  await supabase.from("student_marks").delete().eq("roll_number", rollNumber);
+  const { error } = await supabase.from("students").delete().eq("roll_number", rollNumber);
+  if (error) throw ApiError.internal(`Failed to delete student: ${error.message}`);
+  await writeAudit({ actorId, action: "student.delete", entity: "students", entityId: rollNumber, prevValue: prev, newValue: null });
+  return { rollNumber };
+}
 
 export async function syncMarksWithCourse(rollNumber: string, courseId: string) {
   const { data: subjects } = await supabase
     .from("subjects")
     .select("id")
     .eq("course_id", courseId)
+    .eq("status", "active")
     .is("deleted_at", null);
   if (!subjects?.length) return;
   const rows = subjects.map((s) => ({ roll_number: rollNumber, subject_id: s.id, obtained_marks: null }));

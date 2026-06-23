@@ -14,7 +14,7 @@ import { publicRegistrationsRouter, adminRegistrationsRouter } from "./modules/r
 import { adminStudentsRouter } from "./modules/students/students.routes";
 import { adminEmployeesRouter } from "./modules/employees/employees.routes";
 import { publicVerificationRouter } from "./modules/verification/verification.routes";
-import { publicUploadsRouter, adminUploadsRouter } from "./modules/storage/storage.routes";
+import { publicUploadsRouter, adminUploadsRouter, publicImageRouter } from "./modules/storage/storage.routes";
 import { publicEnquiriesRouter, adminEnquiriesRouter } from "./modules/enquiries/enquiries.routes";
 import { publicFeedbacksRouter, adminFeedbacksRouter } from "./modules/feedbacks/feedbacks.routes";
 import { publicTestimonialsRouter, adminTestimonialsRouter } from "./modules/testimonials/testimonials.routes";
@@ -29,6 +29,9 @@ export function buildApiRouter(): Router {
   const api = Router();
 
   api.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+  // Same-origin image proxy (mounted before the rate limiter; images are high-volume).
+  api.use("/public/image", publicImageRouter);
 
   // Public surface (rate-limited)
   const pub = Router();

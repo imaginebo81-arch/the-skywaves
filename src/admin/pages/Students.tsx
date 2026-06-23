@@ -4,6 +4,7 @@ import { useApi } from "../../hooks/useApi";
 import { adminApi } from "../../lib/api/admin";
 import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, StatusBadge, PhotoAvatar } from "../components/ui";
 import { downloadCsv, parseUploadedFile } from "../../lib/csv";
+import { formatDate } from "../../lib/dateUtils";
 
 interface Course { id: string; courseName: string; }
 interface Student {
@@ -108,7 +109,7 @@ export default function Students() {
     };
     if (profilePhotoPath) payload.profilePhotoPath = profilePhotoPath;
     try {
-      if (editing) await adminApi.update("students", editing.rollNumber, payload);
+      if (editing) await adminApi.update("students", editing.rollNumber, { rollNumber: form.rollNumber, ...payload });
       else await adminApi.create("students", { rollNumber: form.rollNumber, ...payload });
       setShowForm(false);
       reload();
@@ -270,14 +271,17 @@ export default function Students() {
                   <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{s.name}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{s.fatherName ?? "-"}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{s.motherName ?? "-"}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{s.dateOfBirth}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(s.dateOfBirth)}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{s.courseName ?? "-"}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{s.contactNumber ?? "-"}</td>
                   <td className="px-4 py-3 whitespace-nowrap"><StatusBadge status={s.deletedAt ? "deleted" : s.archivedAt ? "inactive" : s.status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       {s.deletedAt ? (
-                        <Button variant="ghost" onClick={() => setConfirm({ action: "restore", student: s })}><RotateCcw size={16} /></Button>
+                        <>
+                          <Button variant="ghost" onClick={() => setConfirm({ action: "restore", student: s })}><RotateCcw size={16} /></Button>
+                          <Button variant="ghost" onClick={() => setConfirm({ action: "delete", student: s })}><Trash2 size={16} className="text-red-500" /></Button>
+                        </>
                       ) : (
                         <>
                           <Button variant="ghost" onClick={() => openEdit(s)}><Pencil size={16} /></Button>
@@ -300,13 +304,13 @@ export default function Students() {
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Student" : "New Student"} wide>
         <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Roll Number">
-            <input required disabled={!!editing} className={`${inputClass} disabled:bg-gray-100`} value={form.rollNumber} onChange={(e) => setForm({ ...form, rollNumber: e.target.value })} />
+            <input required className={`${inputClass} uppercase`} value={form.rollNumber} onChange={(e) => setForm({ ...form, rollNumber: e.target.value })} />
           </Field>
           <Field label="Name">
-            <input required className={inputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input required className={`${inputClass} uppercase`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
-          <Field label="Father Name"><input className={inputClass} value={form.fatherName} onChange={(e) => setForm({ ...form, fatherName: e.target.value })} /></Field>
-          <Field label="Mother Name"><input className={inputClass} value={form.motherName} onChange={(e) => setForm({ ...form, motherName: e.target.value })} /></Field>
+          <Field label="Father Name"><input className={`${inputClass} uppercase`} value={form.fatherName} onChange={(e) => setForm({ ...form, fatherName: e.target.value })} /></Field>
+          <Field label="Mother Name"><input className={`${inputClass} uppercase`} value={form.motherName} onChange={(e) => setForm({ ...form, motherName: e.target.value })} /></Field>
           <Field label="Date of Birth"><input required type="date" className={inputClass} value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} /></Field>
           <Field label="Contact Number"><input className={inputClass} value={form.contactNumber} onChange={(e) => setForm({ ...form, contactNumber: e.target.value })} /></Field>
           <Field label="Course">
@@ -351,7 +355,7 @@ export default function Students() {
       <ConfirmDialog
         open={!!confirm}
         title={confirm?.action === "archive" ? "Archive Student" : confirm?.action === "delete" ? "Delete Student" : "Restore Student"}
-        message={confirm?.action === "delete" ? "This will soft-delete the student. They can be restored later." : confirm?.action === "archive" ? "This will archive the student." : "This will restore the student."}
+        message={confirm?.action === "delete" ? "This will permanently delete the student and all their marks. This cannot be undone. To hide a student without deleting, use Archive instead." : confirm?.action === "archive" ? "This will archive the student." : "This will restore the student."}
         confirmLabel={confirm?.action === "archive" ? "Archive" : confirm?.action === "delete" ? "Delete" : "Restore"}
         destructive={confirm?.action === "delete"}
         onConfirm={runConfirm}
@@ -361,7 +365,7 @@ export default function Students() {
       <ConfirmDialog
         open={confirmBulkDelete}
         title={`Delete ${selected.size} Student${selected.size !== 1 ? "s" : ""}`}
-        message="This will soft-delete all selected students. They can be restored later."
+        message="This will permanently delete all selected students and their marks. This cannot be undone."
         confirmLabel="Delete All"
         destructive
         onConfirm={bulkDelete}

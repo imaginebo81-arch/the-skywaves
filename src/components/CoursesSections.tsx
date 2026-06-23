@@ -48,7 +48,7 @@ export default function CoursesSections() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {group.courses.slice(0, 3).map((course, index) => (
+            {group.courses.slice(0, 9).map((course, index) => (
               <div
                 key={course.id}
                 onClick={() => setSelected(course)}

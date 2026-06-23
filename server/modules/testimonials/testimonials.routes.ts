@@ -144,7 +144,7 @@ adminTestimonialsRouter.delete(
   asyncHandler(async (req, res) => {
     const { error } = await supabase
       .from("testimonials")
-      .update({ deleted_at: new Date().toISOString() })
+      .delete()
       .eq("id", req.params.id);
     if (error) throw ApiError.internal("Failed to delete testimonial");
     await writeAudit({

@@ -48,6 +48,9 @@ export const subjectsCrud = createCrud<SubjectDto>({
   supportsArchive: false,
   defaultOrder: { column: "display_order", ascending: true },
   toDto,
+  onBeforeDelete: async (id) => {
+    await supabase.from("student_marks").delete().eq("subject_id", id);
+  },
 });
 
 export function toSubjectRow(input: {

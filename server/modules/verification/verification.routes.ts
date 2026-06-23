@@ -7,16 +7,14 @@ import { verifyResultToken } from "../../lib/tokens";
 import { getResultByToken, verifyEmployee, verifyStudent } from "./verification.service";
 import { writeAudit } from "../../lib/audit";
 
-const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-
 const studentSchema = z.object({
   rollNumber: z.string().trim().min(1).max(60),
-  dateOfBirth: dateStr,
+  name: z.string().trim().min(1).max(200),
 });
 
 const employeeSchema = z.object({
   employmentReferenceNumber: z.string().trim().min(1).max(60),
-  dateOfBirth: dateStr,
+  name: z.string().trim().min(1).max(200),
 });
 
 export const publicVerificationRouter = Router();
@@ -27,7 +25,7 @@ publicVerificationRouter.post(
   asyncHandler(async (req, res) => {
     const body = req.body as z.infer<typeof studentSchema>;
     try {
-      const result = await verifyStudent(body.rollNumber, body.dateOfBirth);
+      const result = await verifyStudent(body.rollNumber, body.name);
       await writeAudit({ actorId: "public", action: "public.verify_student", entity: "verification", entityId: body.rollNumber.toUpperCase().trim(), newValue: { success: true } });
       ok(res, result);
     } catch (err) {
@@ -43,7 +41,7 @@ publicVerificationRouter.post(
   asyncHandler(async (req, res) => {
     const body = req.body as z.infer<typeof employeeSchema>;
     try {
-      const result = await verifyEmployee(body.employmentReferenceNumber, body.dateOfBirth);
+      const result = await verifyEmployee(body.employmentReferenceNumber, body.name);
       await writeAudit({ actorId: "public", action: "public.verify_employee", entity: "verification", entityId: body.employmentReferenceNumber.toUpperCase().trim(), newValue: { success: true } });
       ok(res, result);
     } catch (err) {

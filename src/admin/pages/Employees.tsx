@@ -5,6 +5,7 @@ import { adminApi } from "../../lib/api/admin";
 import { ApiError } from "../../lib/api/client";
 import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, StatusBadge, PhotoAvatar } from "../components/ui";
 import { downloadCsv, parseUploadedFile } from "../../lib/csv";
+import { formatDate } from "../../lib/dateUtils";
 
 interface Employee {
   employmentReferenceNumber: string;
@@ -286,11 +287,11 @@ export default function Employees() {
                   <td className="px-4 py-3 font-mono text-xs text-gray-700 whitespace-nowrap">{emp.employmentReferenceNumber}</td>
                   <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{emp.name}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{emp.fatherName ?? "-"}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{emp.dateOfBirth ?? "-"}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(emp.dateOfBirth)}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{emp.designation ?? "-"}</td>
                   <td className="px-4 py-3 text-gray-600 max-w-[160px] truncate">{emp.address ?? "-"}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{emp.joiningDate ?? "-"}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{emp.leavingDate ?? "-"}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(emp.joiningDate)}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(emp.leavingDate)}</td>
                   <td className="px-4 py-3"><StatusBadge status={emp.deletedAt ? "deleted" : emp.archivedAt ? "inactive" : (emp.leavingDate ? "completed" : emp.status)} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
@@ -318,10 +319,10 @@ export default function Employees() {
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Employee" : "New Employee"} wide>
         <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Employment Reference Number">
-            <input required disabled={!!editing} className={`${inputClass} disabled:bg-gray-100`} value={form.employmentReferenceNumber} onChange={(e) => setForm({ ...form, employmentReferenceNumber: e.target.value })} />
+            <input required disabled={!!editing} className={`${inputClass} uppercase disabled:bg-gray-100`} value={form.employmentReferenceNumber} onChange={(e) => setForm({ ...form, employmentReferenceNumber: e.target.value })} />
           </Field>
-          <Field label="Name"><input required className={inputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
-          <Field label="Father Name"><input className={inputClass} value={form.fatherName} onChange={(e) => setForm({ ...form, fatherName: e.target.value })} /></Field>
+          <Field label="Name"><input required className={`${inputClass} uppercase`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
+          <Field label="Father Name"><input className={`${inputClass} uppercase`} value={form.fatherName} onChange={(e) => setForm({ ...form, fatherName: e.target.value })} /></Field>
           <Field label="Date of Birth"><input required type="date" className={inputClass} value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} /></Field>
           <Field label="Designation"><input className={inputClass} value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} /></Field>
           <Field label="Status">

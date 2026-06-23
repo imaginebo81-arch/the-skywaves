@@ -41,6 +41,9 @@ export const courseGroupsCrud = createCrud<CourseGroupDto>({
   searchColumns: ["name", "status"],
   defaultOrder: { column: "display_order", ascending: true },
   toDto,
+  onBeforeDelete: async (id) => {
+    await supabase.from("courses").update({ course_group_id: null }).eq("course_group_id", id);
+  },
 });
 
 export function toCourseGroupRow(input: {

@@ -36,13 +36,13 @@ export const publicApi = {
     profilePhotoPath?: string;
   }) => api.post<RegistrationResult>("/public/registrations", input),
 
-  verifyStudent: (rollNumber: string, dateOfBirth: string) =>
-    api.post<StudentResult>("/public/verify/student", { rollNumber, dateOfBirth }),
+  verifyStudent: (rollNumber: string, name: string) =>
+    api.post<StudentResult>("/public/verify/student", { rollNumber, name }),
 
-  verifyEmployee: (employmentReferenceNumber: string, dateOfBirth: string) =>
+  verifyEmployee: (employmentReferenceNumber: string, name: string) =>
     api.post<EmployeeVerification>("/public/verify/employee", {
       employmentReferenceNumber,
-      dateOfBirth,
+      name,
     }),
 
   getResultByToken: (token: string) =>

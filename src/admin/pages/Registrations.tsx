@@ -3,6 +3,7 @@ import { Search, Eye, Check, X, Trash2, RotateCcw } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { adminApi } from "../../lib/api/admin";
 import { PageHeader, Spinner, ErrorBanner, Button, Modal, ConfirmDialog, Field, inputClass, StatusBadge } from "../components/ui";
+import { formatDate } from "../../lib/dateUtils";
 
 interface Registration {
   id: string;
@@ -137,7 +138,7 @@ export default function Registrations() {
                   <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{reg.name}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{reg.fatherName ?? "-"}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{reg.motherName ?? "-"}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{reg.dateOfBirth ?? "-"}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(reg.dateOfBirth)}</td>
                   <td className="px-4 py-3 text-gray-600 capitalize">{reg.gender ?? "-"}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{reg.courseName ?? "-"}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{reg.contactNumber ?? "-"}</td>
@@ -181,11 +182,11 @@ export default function Registrations() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 flex-1 text-sm">
               <Detail label="Admission Number" value={view.admissionNumber} />
-              <Detail label="Admission Date" value={view.admissionDate} />
+              <Detail label="Admission Date" value={formatDate(view.admissionDate)} />
               <Detail label="Name" value={view.name} />
               <Detail label="Father Name" value={view.fatherName ?? "-"} />
               <Detail label="Mother Name" value={view.motherName ?? "-"} />
-              <Detail label="Date of Birth" value={view.dateOfBirth ?? "-"} />
+              <Detail label="Date of Birth" value={formatDate(view.dateOfBirth)} />
               <Detail label="Gender" value={view.gender ?? "-"} />
               <Detail label="Contact" value={view.contactNumber ?? "-"} />
               <Detail label="Course" value={view.courseName ?? "-"} />

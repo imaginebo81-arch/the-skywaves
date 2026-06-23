@@ -346,14 +346,14 @@ export const defaultSiteContent: SiteContent = {
     student: {
       heading: "Student Verification",
       description:
-        "Please enter the student's date of birth and reference number to view their certification details.",
-      refLabel: "Reference Number / Roll Number",
+        "Please enter the student's name and reference number to view their certification details.",
+      refLabel: "Roll Number",
       refPlaceholder: "e.g. SW/CV/KK/1234",
     },
     employee: {
       heading: "Employment Verification",
       description:
-        "Please enter the employee's date of birth and reference number to view their employment records.",
+        "Please enter the employee's name and reference number to view their employment records.",
       refLabel: "Employment Reference Number",
       refPlaceholder: "e.g. SW/CV/KK/1234",
       certificateTemplate:

@@ -44,6 +44,22 @@ export const coursesCrud = createCrud<CourseDto>({
   selectColumns: SELECT,
   searchColumns: ["course_name", "status"],
   toDto,
+  onBeforeDelete: async (id) => {
+    const { count } = await supabase
+      .from("students")
+      .select("roll_number", { count: "exact", head: true })
+      .eq("course_id", id);
+    if ((count ?? 0) > 0) {
+      throw ApiError.badRequest("This course has students. Delete those students first, or archive the course instead.");
+    }
+    const { data: subjects } = await supabase.from("subjects").select("id").eq("course_id", id);
+    const subjectIds = (subjects ?? []).map((s) => s.id as string);
+    if (subjectIds.length) {
+      await supabase.from("student_marks").delete().in("subject_id", subjectIds);
+      await supabase.from("subjects").delete().eq("course_id", id);
+    }
+    await supabase.from("registrations").update({ course_id: null }).eq("course_id", id);
+  },
 });
 
 export function toCourseRow(input: {

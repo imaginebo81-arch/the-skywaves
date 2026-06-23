@@ -289,7 +289,7 @@ export async function deleteMarkById(markId: string, actorId: string) {
 
   const { error } = await supabase
     .from("student_marks")
-    .update({ deleted_at: new Date().toISOString() })
+    .delete()
     .eq("id", markId);
   if (error) throw ApiError.internal("Failed to delete mark");
 
@@ -306,9 +306,8 @@ export async function deleteMarkById(markId: string, actorId: string) {
 export async function clearStudentMarks(rollNumber: string, actorId: string) {
   const { error } = await supabase
     .from("student_marks")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("roll_number", rollNumber)
-    .is("deleted_at", null);
+    .delete()
+    .eq("roll_number", rollNumber);
   if (error) throw ApiError.internal("Failed to clear marks");
 
   await supabase.from("students").update({ grade: null }).eq("roll_number", rollNumber);
@@ -326,10 +325,11 @@ export async function bulkUpdateMarksByName(
   entries: { rollNumber: string; subjectName?: string | null; obtainedMarks?: number | null; grade?: string | null; courseGrade?: string | null }[],
   actorId: string
 ) {
+  const normalizeRoll = (r: string) => r.trim().toUpperCase();
   const courseGradesByRoll = new Map<string, string | null>();
   for (const e of entries) {
     if (e.courseGrade !== undefined) {
-      courseGradesByRoll.set(e.rollNumber, e.courseGrade ?? null);
+      courseGradesByRoll.set(normalizeRoll(e.rollNumber), e.courseGrade ?? null);
     }
   }
   for (const [rollNumber, grade] of courseGradesByRoll) {
@@ -339,9 +339,10 @@ export async function bulkUpdateMarksByName(
   const markEntries = entries.filter((e) => e.subjectName?.trim());
   const byRoll = new Map<string, typeof markEntries>();
   for (const e of markEntries) {
-    const list = byRoll.get(e.rollNumber) ?? [];
+    const roll = normalizeRoll(e.rollNumber);
+    const list = byRoll.get(roll) ?? [];
     list.push(e);
-    byRoll.set(e.rollNumber, list);
+    byRoll.set(roll, list);
   }
 
   let ok = 0;

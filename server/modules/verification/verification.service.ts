@@ -5,19 +5,25 @@ import { signResultToken } from "../../lib/tokens";
 import { defaultSiteContent } from "../../../src/data/siteContent";
 import { getMergedContent } from "../content/content.service";
 
-export async function verifyStudent(rollNumber: string, dateOfBirth: string) {
+export async function verifyStudent(rollNumber: string, name: string) {
+  const roll = rollNumber.toUpperCase().trim();
+  const normalizedName = name.trim().replace(/\s+/g, " ").toUpperCase();
+
   const { data, error } = await supabase
     .from("students")
-    .select("roll_number")
-    .eq("roll_number", rollNumber.toUpperCase().trim())
-    .eq("date_of_birth", dateOfBirth)
+    .select("roll_number, name")
+    .eq("roll_number", roll)
     .is("deleted_at", null)
     .maybeSingle();
   if (error) throw ApiError.internal("Verification failed");
-  if (!data) throw ApiError.notFound("No matching student record found. Please check the details and try again.");
 
-  const result = await getStudentResult(rollNumber);
-  return { ...result, resultToken: signResultToken(rollNumber) };
+  const dbName = ((data?.name as string) ?? "").trim().replace(/\s+/g, " ").toUpperCase();
+  if (!data || dbName !== normalizedName) {
+    throw ApiError.notFound("No matching student record found. Please check the details and try again.");
+  }
+
+  const result = await getStudentResult(roll);
+  return { ...result, resultToken: signResultToken(roll) };
 }
 
 export async function getResultByToken(rollNumber: string) {
@@ -38,16 +44,22 @@ function formatDate(value: string | null): string {
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 }
 
-export async function verifyEmployee(referenceNumber: string, dateOfBirth: string) {
+export async function verifyEmployee(referenceNumber: string, name: string) {
+  const ref = referenceNumber.toUpperCase().trim();
+  const normalizedName = name.trim().replace(/\s+/g, " ").toUpperCase();
+
   const { data, error } = await supabase
     .from("employees")
     .select("employment_reference_number, name, father_name, date_of_birth, address, joining_date, leaving_date, designation, certificate_template_variables, certificate_markdown, profile_photo_path")
-    .eq("employment_reference_number", referenceNumber.toUpperCase().trim())
-    .eq("date_of_birth", dateOfBirth)
+    .eq("employment_reference_number", ref)
     .is("deleted_at", null)
     .maybeSingle();
   if (error) throw ApiError.internal("Verification failed");
-  if (!data) throw ApiError.notFound("No matching employment record found. Please check the details and try again.");
+
+  const dbName = ((data?.name as string) ?? "").trim().replace(/\s+/g, " ").toUpperCase();
+  if (!data || dbName !== normalizedName) {
+    throw ApiError.notFound("No matching employment record found. Please check the details and try again.");
+  }
 
   let template = defaultSiteContent.verification.employee.certificateTemplate;
   try {

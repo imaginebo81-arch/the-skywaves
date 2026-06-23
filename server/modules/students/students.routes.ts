@@ -34,7 +34,7 @@ const createSchema = z.object({
   status: z.enum(["active", "inactive", "completed"]).default("active"),
 });
 
-const updateSchema = createSchema.partial().omit({ rollNumber: true });
+const updateSchema = createSchema.partial();
 
 const marksSchema = z.object({
   marks: z.array(

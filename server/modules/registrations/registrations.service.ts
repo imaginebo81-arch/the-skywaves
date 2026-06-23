@@ -42,13 +42,16 @@ function toDto(row: Record<string, unknown>) {
   };
 }
 
+const toUpper = (v: string | null | undefined) =>
+  typeof v === "string" ? v.trim().replace(/\s+/g, " ").toUpperCase() : (v ?? null);
+
 export async function createRegistration(input: RegInput) {
   const { data, error } = await supabase
     .from("registrations")
     .insert({
-      name: input.name,
-      father_name: input.fatherName ?? null,
-      mother_name: input.motherName ?? null,
+      name: toUpper(input.name),
+      father_name: toUpper(input.fatherName),
+      mother_name: toUpper(input.motherName),
       date_of_birth: input.dateOfBirth ?? null,
       gender: input.gender ?? null,
       address: input.address ?? null,
@@ -115,6 +118,7 @@ export async function approveRegistration(
   startDate?: string | null,
   endDate?: string | null
 ) {
+  const normalizedRoll = rollNumber.trim().toUpperCase();
   const { data: reg } = await supabase
     .from("registrations")
     .select("course_id")
@@ -123,7 +127,7 @@ export async function approveRegistration(
 
   const { data, error } = await supabase.rpc("approve_registration", {
     p_registration_id: id,
-    p_roll_number: rollNumber,
+    p_roll_number: normalizedRoll,
     p_actor: actorId,
     p_start_date: startDate ?? null,
     p_end_date: endDate ?? null,
@@ -137,10 +141,10 @@ export async function approveRegistration(
 
   if (reg?.course_id) {
     const { syncMarksWithCourse } = await import("../students/students.service");
-    await syncMarksWithCourse(rollNumber, reg.course_id as string).catch(() => {});
+    await syncMarksWithCourse(normalizedRoll, reg.course_id as string).catch(() => {});
   }
 
-  return { rollNumber, student: data };
+  return { rollNumber: normalizedRoll, student: data };
 }
 
 export async function rejectRegistration(id: string, actorId: string) {
@@ -167,17 +171,16 @@ export async function rejectRegistration(id: string, actorId: string) {
 export async function softDeleteRegistration(id: string, actorId: string) {
   const { data: prev } = await supabase.from("registrations").select("*").eq("id", id).maybeSingle();
   if (!prev) throw ApiError.notFound("Registration not found");
-  const { error } = await supabase
-    .from("registrations")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw ApiError.internal("Failed to delete registration");
+  await supabase.from("students").update({ registration_id: null }).eq("registration_id", id);
+  const { error } = await supabase.from("registrations").delete().eq("id", id);
+  if (error) throw ApiError.internal(`Failed to delete registration: ${error.message}`);
   await writeAudit({
     actorId,
     action: "registration.delete",
     entity: "registrations",
     entityId: id,
     prevValue: prev,
+    newValue: null,
   });
   return { id };
 }
