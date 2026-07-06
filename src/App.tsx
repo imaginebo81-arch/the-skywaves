@@ -24,6 +24,7 @@ import NotFound from "./components/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsOfService from "./components/TermsOfService";
+import Watermark from "./components/Watermark";
 
 function HomePage() {
   return (
@@ -71,6 +72,7 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
+        <Watermark />
       </div>
     </BrowserRouter>
   );
